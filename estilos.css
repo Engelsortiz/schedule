@@ -261,39 +261,67 @@ tr:hover td { background: #f9fbff; }
 }
 
 #config-view {
-  grid-template-columns: 1fr;
-  gap: 1.1rem;
-  max-width: 1240px;
+  width: min(100%, 1160px);
+  margin: 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 0.15rem 0 0.45rem;
 }
 #config-view .panel {
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #d8e1f0;
+  border-radius: 16px;
+  box-shadow: 0 9px 22px rgba(15, 23, 42, 0.08);
 }
 #config-view .panel::before {
   content: "";
   display: block;
-  height: 3px;
-  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 45%, transparent 100%);
-  opacity: 0.38;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(29, 78, 216, 0.2), rgba(29, 78, 216, 0.05));
 }
 #config-view .panel-header {
-  background: #f8fbff;
+  background: #f5f8fd;
+  padding: 1rem 1.25rem 0.95rem;
 }
 #config-view .panel-header h3 {
   font-size: 1.08rem;
+  color: #0f234f;
+  font-weight: 800;
 }
 #config-view .panel-header p {
-  max-width: 70ch;
+  color: #64748b;
+  font-size: 0.83rem;
 }
 #config-view .panel-body + .panel-body {
-  border-top: 1px solid #e9eef8;
+  border-top: 1px solid #e8eef7;
+}
+#config-view .panel-body {
+  padding: 1rem 1.25rem 1.2rem;
 }
 #config-view .form-grid {
   grid-template-columns: repeat(1, minmax(0, 1fr));
   align-items: end;
+  gap: 0.85rem 1rem;
+}
+#config-view .form-grid label {
+  font-size: 0.81rem;
+}
+#config-view input,
+#config-view select {
+  border-color: #d5deed;
+  border-radius: 9px;
+  min-height: 40px;
+  background: #fff;
 }
 #config-view .form-grid .btn {
   justify-self: start;
+  min-width: 176px;
+  background: #0f172a;
+}
+#config-view .form-grid .btn.btn-primary {
+  background: #111827;
+}
+#config-view .list li {
+  padding: 0.62rem 0.2rem;
 }
 
 .tabs {
@@ -340,19 +368,16 @@ tr:hover td { background: #f9fbff; }
   .row-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   #config-view {
-    grid-template-columns: 1fr;
     gap: 1.2rem;
   }
   #config-view .form-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-    gap: 1rem;
-  }
-  #config-view .form-grid label {
-    min-width: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   #config-view .form-grid .btn {
+    grid-column: 4 / 5;
     justify-self: end;
     align-self: end;
-    min-width: 170px;
+    width: 100%;
+    max-width: 210px;
   }
 }
