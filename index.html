@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Schedule Studio | Generador Académico</title>
+    <title>Schedule UI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,195 +13,218 @@
     <link rel="stylesheet" href="estilos.css" />
   </head>
   <body>
-    <header class="topbar" id="topbar">
-      <button id="menuToggle" class="icon-btn" aria-label="Alternar menú">☰</button>
+    <header class="topbar">
+      <button id="btn-menu" type="button" aria-label="Abrir menú">☰</button>
       <h1>Generador de Horarios Académicos</h1>
+      <span aria-hidden="true"></span>
     </header>
 
-    <div class="app-shell">
-      <aside class="sidebar" id="sidebar">
-        <div class="brand-card">
-          <strong>Schedule Studio</strong>
-          <small>Planificación inteligente</small>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <strong>Schedule</strong>
+          <small>Panel de organización</small>
         </div>
-        <nav class="side-nav">
-          <a href="#seccion-csv">Carga CSV</a>
-          <a href="#seccion-manual">Asignación</a>
-          <a href="#seccion-automatica">Generación automática</a>
-          <a href="#seccion-vista">Vista</a>
+        <nav>
+          <a href="#carga">Carga CSV</a>
+          <a href="#asignacion">Asignación manual</a>
+          <a href="#generacion">Generación automática</a>
+          <a href="#vista">Vista de horario</a>
         </nav>
       </aside>
 
-      <main class="main-content" id="mainContent">
-        <section class="panel" id="seccion-csv">
-          <div class="panel-header">
-            <h2>Carga CSV</h2>
-            <p class="hint">Columnas requeridas: clase, creditos, tipo, aula, docente.</p>
+      <main class="content">
+        <section id="principal-view">
+          <section id="carga" class="panel">
+            <div class="section-head">
+              <h2>Carga CSV</h2>
+              <p class="hint">Importa cursos y parámetros base para construir el horario.</p>
+            </div>
+
+            <div class="row-3">
+              <label>
+                Archivo CSV
+                <input id="csv-input" type="file" accept=".csv,text/csv" />
+              </label>
+              <label>
+                Jornada
+                <select>
+                  <option>Diurna</option>
+                  <option>Nocturna</option>
+                  <option>Fin de semana</option>
+                </select>
+              </label>
+              <button id="btn-importar-csv" type="button" class="btn-primary">Importar CSV</button>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Clase</th>
+                    <th>Créditos</th>
+                    <th>Docente</th>
+                    <th>Aula</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Programación I</td>
+                    <td>4</td>
+                    <td>María Pérez</td>
+                    <td>A-201</td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                  <tr>
+                    <td>Matemática II</td>
+                    <td>3</td>
+                    <td>Carlos Ruiz</td>
+                    <td>B-104</td>
+                    <td><span class="tag">Cargado</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="asignacion" class="panel">
+            <div class="section-head">
+              <h2>Asignación manual</h2>
+              <p class="hint">Asigna clases de forma individual por día, bloque y aula.</p>
+            </div>
+
+            <div class="row-4">
+              <label>
+                Clase
+                <select>
+                  <option>Programación I</option>
+                </select>
+              </label>
+              <label>
+                Día
+                <select>
+                  <option>Lunes</option>
+                  <option>Martes</option>
+                  <option>Miércoles</option>
+                </select>
+              </label>
+              <label>
+                Bloque
+                <select>
+                  <option>07:00 - 07:45</option>
+                </select>
+              </label>
+              <label>
+                Aula
+                <select>
+                  <option>A-201</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn-dark">Guardar asignación</button>
+              <button type="button" class="btn-outline">Limpiar selección</button>
+            </div>
+          </section>
+
+          <section id="generacion" class="panel">
+            <div class="section-head">
+              <h2>Generación automática</h2>
+              <p class="hint">Genera propuestas equilibradas según capacidad y reglas.</p>
+            </div>
+
+            <div class="row-2">
+              <label>
+                Máximo por grupo
+                <input type="number" value="35" />
+              </label>
+              <label>
+                Duración de bloque (min)
+                <input type="number" value="45" />
+              </label>
+            </div>
+
+            <div class="actions">
+              <button id="btn-generar-auto" type="button" class="btn-primary">Generar automáticamente</button>
+              <button id="btn-reiniciar-demo" type="button" class="btn-outline">Reiniciar demo</button>
+            </div>
+
+            <div id="generacion-console" class="console">[INFO] Esperando ejecución de generación automática...</div>
+          </section>
+
+          <section id="vista" class="panel">
+            <div class="section-head">
+              <h2>Vista de horario</h2>
+              <p class="hint">Visualización semanal con estados por celda.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table id="vista-table">
+                <thead id="vista-thead">
+                  <tr>
+                    <th>Hora</th>
+                    <th class="day-col">Lunes</th>
+                    <th class="day-col">Martes</th>
+                    <th class="day-col">Miércoles</th>
+                    <th class="day-col">Jueves</th>
+                    <th class="day-col">Viernes</th>
+                  </tr>
+                </thead>
+                <tbody id="vista-tbody">
+                  <tr>
+                    <td>07:00</td>
+                    <td class="cell-filled">Prog I<br /><small>A-201</small></td>
+                    <td class="cell-empty">—</td>
+                    <td class="cell-filled">Mate II<br /><small>B-104</small></td>
+                    <td class="cell-empty">—</td>
+                    <td class="cell-empty">—</td>
+                  </tr>
+                  <tr>
+                    <td>07:45</td>
+                    <td class="cell-empty">—</td>
+                    <td class="cell-filled">Física<br /><small>Lab-2</small></td>
+                    <td class="cell-empty">—</td>
+                    <td class="cell-empty">—</td>
+                    <td class="cell-filled">Prog I<br /><small>A-201</small></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="config-view" class="panel">
+          <div class="section-head">
+            <h2>Configuración</h2>
+            <p class="hint">Parámetros generales de apariencia y preferencias del horario.</p>
           </div>
 
-          <div class="form-grid">
+          <div class="row-3">
             <label>
-              Archivo CSV
-              <input type="file" id="csvInput" accept=".csv,text/csv" />
-            </label>
-            <label>
-              Tipo de jornada
-              <select id="turnoSelect">
-                <option value="diurno">Diurno</option>
-                <option value="sabatino">Sabatino</option>
-                <option value="dominical">Dominical</option>
+              Tema
+              <select>
+                <option>Claro</option>
+                <option>Oscuro</option>
               </select>
             </label>
             <label>
-              Hora inicio receso
-              <input type="time" id="recesoInicio" value="10:15" />
+              Inicio de jornada
+              <input type="time" value="07:00" />
             </label>
             <label>
-              Hora fin receso
-              <input type="time" id="recesoFin" value="11:00" />
-            </label>
-            <label>
-              Hora inicio almuerzo
-              <input type="time" id="almuerzoInicio" value="12:30" />
-            </label>
-            <label>
-              Hora fin almuerzo
-              <input type="time" id="almuerzoFin" value="13:15" />
+              Fin de jornada
+              <input type="time" value="21:00" />
             </label>
           </div>
-
-          <div class="table-wrap">
-            <table id="tablaClases">
-              <thead>
-                <tr>
-                  <th>Clase</th>
-                  <th>Créditos</th>
-                  <th>Bloques</th>
-                  <th>Tipo</th>
-                  <th>Aula</th>
-                  <th>Docente</th>
-                  <th>Tags</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="panel" id="seccion-manual">
-          <div class="panel-header">
-            <h2>Asignación manual</h2>
-            <p class="hint">Selecciona una celda de la tabla para abrir el panel de asignación visual.</p>
-          </div>
-
-          <div class="form-grid">
-            <label>
-              Clase
-              <select id="manualClase"></select>
-            </label>
-            <label>
-              Día
-              <select id="manualDia">
-                <option value="Lunes">Lunes</option>
-                <option value="Martes">Martes</option>
-                <option value="Miércoles">Miércoles</option>
-                <option value="Jueves">Jueves</option>
-                <option value="Viernes">Viernes</option>
-                <option value="Sábado">Sábado</option>
-                <option value="Domingo">Domingo</option>
-              </select>
-            </label>
-            <label>
-              Bloque inicial
-              <input type="number" id="manualBloque" min="1" value="1" />
-            </label>
-            <button id="agregarManual" class="primary-btn" type="button">Agregar asignación</button>
-          </div>
-
-          <div class="manual-tools">
-            <button id="toggleManualMode" class="ghost-btn" type="button">Modo selección visual: OFF</button>
-            <small id="manualHint">Haz clic en un slot de "Vista" para asignar o mover clases.</small>
-          </div>
-
-          <ul id="listaAsignacionesManual" class="manual-list"></ul>
-          <div id="conflictSuggestions" class="suggestions"></div>
-        </section>
-
-        <section class="panel" id="seccion-automatica">
-          <div class="panel-header">
-            <h2>Generación automática</h2>
-            <p class="hint">Balancea carga por día, respeta turnos y evita conflictos de recursos.</p>
-          </div>
-
-          <div class="form-grid">
-            <label>
-              Matrícula total
-              <input type="number" id="matriculaInput" min="1" value="120" />
-            </label>
-            <label>
-              Máximo por grupo
-              <input type="number" id="maxGrupoInput" min="1" value="35" />
-            </label>
-            <button id="btnGenerar" class="primary-btn" type="button">Generar horario</button>
-            <button id="btnLimpiar" class="ghost-btn" type="button">Limpiar</button>
-          </div>
-
-          <div class="group-result" id="groupResult"></div>
-          <div id="generationList" class="generation-list"></div>
-        </section>
-
-        <section class="panel" id="seccion-vista">
-          <div class="panel-header">
-            <h2>Vista</h2>
-            <p class="hint">Tabla editable por bloques de 45 minutos. Soporta click, validación y drag & drop.</p>
-          </div>
-          <div class="table-wrap" id="horarioWrap"></div>
-
-          <div class="console" id="consoleOutput"></div>
         </section>
       </main>
     </div>
 
-    <footer class="footer-tabs" id="footerTabs">
-      <button class="tab-btn active" data-tab="principal" type="button">Principal</button>
-      <button class="tab-btn" data-tab="configuracion" type="button">Configuración</button>
+    <footer class="bottom-tabs">
+      <button class="tab active" data-tab="principal" type="button">Principal</button>
+      <button class="tab" data-tab="config" type="button">Configuración</button>
     </footer>
-
-    <dialog id="manualModal" class="modal">
-      <form method="dialog" class="modal-card" id="manualModalForm">
-        <header>
-          <h3>Asignación visual</h3>
-          <button id="closeManualModal" class="icon-btn" type="submit" aria-label="Cerrar">✕</button>
-        </header>
-
-        <div class="modal-grid">
-          <label>
-            Clase
-            <select id="modalManualClase"></select>
-          </label>
-          <label>
-            Día
-            <input id="modalManualDia" type="text" readonly />
-          </label>
-          <label>
-            Bloque inicial
-            <input id="modalManualBloque" type="number" readonly />
-          </label>
-          <label>
-            Bloques sugeridos
-            <input id="modalBloquesSugeridos" type="text" readonly />
-          </label>
-        </div>
-
-        <div class="modal-feedback" id="modalFeedback"></div>
-
-        <footer class="modal-actions">
-          <button id="btnGuardarModal" class="primary-btn" type="button">Aplicar asignación</button>
-          <button id="btnLiberarSlot" class="ghost-btn" type="button">Liberar slot seleccionado</button>
-        </footer>
-      </form>
-    </dialog>
-
-    <script src="app.js"></script>
   </body>
 </html>
