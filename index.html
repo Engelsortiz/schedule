@@ -40,8 +40,10 @@
         <p class="sidebar-title">Configuración</p>
         <nav class="side-links">
           <a href="#turnos-config">Turno</a>
+          <a href="#periodos-config">Periodos</a>
           <a href="#docentes-areas">Docentes y áreas</a>
           <a href="#coordinaciones-carreras">Coordinaciones</a>
+          <a href="#matricula-config">Matrícula</a>
         </nav>
       </aside>
 
@@ -147,13 +149,13 @@
           </section>
         </section>
 
-        <section id="config-view" class="view hidden">
+        <section id="config-view" class="view hidden config-layout">
           <section id="turnos-config" class="panel">
             <div class="panel-header">
               <h3>Configuración de turno</h3>
-              <p>Guarda parámetros globales del horario.</p>
+              <p>Define los parámetros globales para organizar los bloques académicos.</p>
             </div>
-            <div class="panel-body form-grid row-3">
+            <div class="panel-body form-grid row-4">
               <label>Turno por defecto
                 <select id="cfg-turno-default">
                   <option value="diurno">Diurno</option>
@@ -164,21 +166,52 @@
               <label>Duración de bloque (min)
                 <input id="cfg-block-min" type="number" value="45" min="30" max="90" />
               </label>
-              <button id="btn-save-config" class="btn btn-dark" type="button">Guardar configuración</button>
+              <label>Hora de inicio sugerida
+                <input type="time" value="07:00" />
+              </label>
+              <button id="btn-save-config" class="btn btn-primary" type="button">Guardar turno</button>
+            </div>
+          </section>
+
+          <section id="periodos-config" class="panel">
+            <div class="panel-header">
+              <h3>Configuración de periodos</h3>
+              <p>Administra periodos académicos y ventanas de planificación.</p>
+            </div>
+            <div class="panel-body form-grid row-4">
+              <label>Periodo
+                <input type="text" placeholder="Ej: 2026-I" />
+              </label>
+              <label>Inicio
+                <input type="date" />
+              </label>
+              <label>Fin
+                <input type="date" />
+              </label>
+              <button class="btn btn-dark" type="button">Agregar periodo</button>
+            </div>
+            <div class="panel-body">
+              <ul class="list">
+                <li>2026-I · Ene 15 - May 20</li>
+                <li>2026-II · Jul 10 - Nov 25</li>
+              </ul>
             </div>
           </section>
 
           <section id="docentes-areas" class="panel">
             <div class="panel-header">
               <h3>Docentes y áreas</h3>
-              <p>Administración de catálogos docentes.</p>
+              <p>Gestiona docentes y su área académica de forma centralizada.</p>
             </div>
-            <div class="panel-body form-grid row-3">
+            <div class="panel-body form-grid row-4">
               <label>Docente
                 <input id="docente-nombre" type="text" placeholder="Nombre docente" />
               </label>
               <label>Área
                 <input id="docente-area" type="text" placeholder="Área académica" />
+              </label>
+              <label>Correo institucional
+                <input type="email" placeholder="usuario@institucion.edu" />
               </label>
               <button id="btn-add-docente" class="btn btn-dark" type="button">Añadir docente</button>
             </div>
@@ -190,19 +223,41 @@
           <section id="coordinaciones-carreras" class="panel">
             <div class="panel-header">
               <h3>Coordinaciones y carreras</h3>
-              <p>Catálogo organizacional y matrícula por grupo.</p>
+              <p>Organiza la estructura académica y su distribución por carrera.</p>
             </div>
-            <div class="panel-body form-grid row-3">
+            <div class="panel-body form-grid row-4">
               <label>Coordinación
                 <input id="coord-nombre" type="text" placeholder="Coordinación" />
               </label>
               <label>Carrera
                 <input id="carrera-nombre" type="text" placeholder="Carrera" />
               </label>
+              <label>Plan de estudio
+                <input type="text" placeholder="Ej: 2024" />
+              </label>
               <button id="btn-add-carrera" class="btn btn-dark" type="button">Añadir carrera</button>
             </div>
             <div class="panel-body">
               <ul id="carreras-list" class="list"></ul>
+            </div>
+          </section>
+
+          <section id="matricula-config" class="panel">
+            <div class="panel-header">
+              <h3>Matrícula</h3>
+              <p>Configura cupos por grupo para balancear la asignación de clases.</p>
+            </div>
+            <div class="panel-body form-grid row-4">
+              <label>Carrera
+                <input type="text" placeholder="Nombre de carrera" />
+              </label>
+              <label>Grupo
+                <input type="text" placeholder="Ej: 1A" />
+              </label>
+              <label>Cupo máximo
+                <input type="number" value="35" min="1" />
+              </label>
+              <button class="btn btn-dark" type="button">Guardar matrícula</button>
             </div>
           </section>
         </section>
