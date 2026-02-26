@@ -161,6 +161,136 @@ const classAlreadyScheduled = (courseName, ctx, year) =>
 const findConflict = (candidate) =>
   state.assignments.find((a) => a.day === candidate.day && a.block === candidate.block && sameContext(a, candidate) && a.year === candidate.year);
 
+const parseSlotRange = (slotLabelValue) => {
+  const [, range = ''] = slotLabelValue.split('\n');
+  const [from = '00:00', to = '00:00'] = range.split('-');
+  return { from: from.trim(), to: to.trim() };
+};
+
+const buildSlotMetadata = (slots) =>
+  slots.map((slot, index) => {
+    const { from, to } = parseSlotRange(slot);
+    return {
+      label: slot,
+      index,
+      from,
+      to,
+      fromMin: timeToMin(from),
+      toMin: timeToMin(to)
+    };
+  });
+
+const hasContiguousSequence = (slotMeta, startIdx, size, bloqueMin) => {
+  if (startIdx + size > slotMeta.length) return false;
+  for (let i = startIdx; i < startIdx + size - 1; i += 1) {
+    if (slotMeta[i + 1].fromMin - slotMeta[i].toMin !== 0) return false;
+    if (slotMeta[i].toMin - slotMeta[i].fromMin !== bloqueMin) return false;
+  }
+  return slotMeta[startIdx + size - 1].toMin - slotMeta[startIdx + size - 1].fromMin === bloqueMin;
+};
+
+const findResourceConflict = (ctx, day, block, teacher, room) =>
+  state.assignments.find(
+    (a) => sameContext(a, ctx) && a.day === day && a.block === block && (a.teacher === teacher || a.room === room)
+  );
+
+const countYearAssignmentsByDay = (ctx, year, day) =>
+  state.assignments.filter((a) => sameContext(a, ctx) && a.year === year && a.day === day).length;
+
+const classHasAssignments = (ctx, year, courseName) =>
+  state.assignments.some((a) => sameContext(a, ctx) && a.year === year && a.course === courseName);
+
+const canPlaceSequence = ({ ctx, year, day, startIdx, size, slotMeta, teacher, room, bloqueMin }) => {
+  if (!hasContiguousSequence(slotMeta, startIdx, size, bloqueMin)) {
+    return { ok: false, reason: 'No existe secuencia contigua suficiente.' };
+  }
+
+  for (let offset = 0; offset < size; offset += 1) {
+    const slot = slotMeta[startIdx + offset];
+    const occupiedYearCell = state.assignments.some(
+      (a) => sameContext(a, ctx) && a.year === year && a.day === day && a.block === slot.label
+    );
+    if (occupiedYearCell) return { ok: false, reason: `Celda ocupada en ${day} ${slot.label.replace('\n', ' ')}.` };
+
+    const resourceConflict = findResourceConflict(ctx, day, slot.label, teacher, room);
+    if (resourceConflict) {
+      const resource = resourceConflict.teacher === teacher ? 'docente' : 'aula';
+      return {
+        ok: false,
+        reason: `Choque de ${resource} (${resource === 'docente' ? teacher : room}) en ${day} ${slot.label.replace('\n', ' ')}.`
+      };
+    }
+  }
+
+  return { ok: true };
+};
+
+const getPlacementCandidates = ({ ctx, year, course, days, slotMeta, bloqueMin }) => {
+  const needed = Math.max(1, Number(course.creditos) || 1);
+  const candidates = [];
+
+  for (const day of days) {
+    const dayLoad = countYearAssignmentsByDay(ctx, year, day);
+    for (let startIdx = 0; startIdx <= slotMeta.length - needed; startIdx += 1) {
+      const validation = canPlaceSequence({
+        ctx,
+        year,
+        day,
+        startIdx,
+        size: needed,
+        slotMeta,
+        teacher: course.docente,
+        room: course.aula,
+        bloqueMin
+      });
+
+      if (validation.ok) {
+        candidates.push({ day, startIdx, dayLoad, needed });
+      }
+    }
+  }
+
+  return candidates.sort((a, b) => (a.dayLoad - b.dayLoad) || (a.startIdx - b.startIdx));
+};
+
+const placeCourseSequence = ({ ctx, year, course, candidate, slotMeta }) => {
+  const assignments = [];
+  for (let offset = 0; offset < candidate.needed; offset += 1) {
+    const block = slotMeta[candidate.startIdx + offset].label;
+    const item = {
+      course: course.clase,
+      day: candidate.day,
+      block,
+      room: course.aula,
+      teacher: course.docente,
+      note: '',
+      coordinacion: course.coordinacion,
+      carrera: course.carrera,
+      turno: course.turno,
+      year,
+      source: 'auto'
+    };
+    state.assignments.push(item);
+    assignments.push(item);
+  }
+  return assignments;
+};
+
+const summarizeAutoGeneration = (assigned, conflicts) => {
+  console.group('Resumen generación automática');
+  console.log('Asignadas:', assigned.length);
+  assigned.forEach((item) => {
+    console.log(
+      `✔ ${item.course} (Año ${item.year}) -> ${item.blocks.length} bloque(s) en ${item.day}: ${item.blocks.join(', ')}`
+    );
+  });
+  console.log('Conflictos:', conflicts.length);
+  conflicts.forEach((item) => {
+    console.log(`✖ ${item.course} (Año ${item.year}) -> ${item.reason}`);
+  });
+  console.groupEnd();
+};
+
 const renderCoordinacionOptions = () => {
   const options = listCoordinaciones().map((c) => `<option value="${c}">${c}</option>`).join('');
   selectIds.forEach((id) => {
@@ -346,49 +476,64 @@ const autoGenerate = () => {
   const ctx = currentFilters('csv');
   const slots = getSlotsByTurno(ctx.turno);
   const days = getDaysByTurno(ctx.turno);
-  const cells = days.flatMap((day) => slots.map((block) => ({ day, block })));
+  const slotMeta = buildSlotMetadata(slots);
   const courses = getCoursesByContext(ctx);
+  const bloqueMin = (state.turnos[ctx.turno] || state.turnos.Diurno).bloqueMin;
 
   state.assignments = state.assignments.filter((a) => !(sameContext(a, ctx) && a.source === 'auto'));
 
-  let assignedCount = 0;
+  const assignedCourses = [];
+  const conflicts = [];
 
   for (const year of YEARS) {
-    const yearCourses = courses.filter((c) => (c.year || 1) === year);
-    let cursor = 0;
+    const yearCourses = courses
+      .filter((c) => (c.year || 1) === year)
+      .sort((a, b) => (Number(b.creditos) || 1) - (Number(a.creditos) || 1));
+
     for (const course of yearCourses) {
-      const needed = Math.max(1, Number(course.creditos) || 1);
-      const existing = state.assignments.filter((a) => sameContext(a, ctx) && a.year === year && a.course === course.clase).length;
-      let placed = existing;
+      if (classHasAssignments(ctx, year, course.clase)) continue;
 
-      while (placed < needed && cursor < cells.length) {
-        const cell = cells[cursor++];
-        const candidate = {
+      const candidates = getPlacementCandidates({
+        ctx,
+        year,
+        course,
+        days,
+        slotMeta,
+        bloqueMin
+      });
+
+      if (!candidates.length) {
+        const needed = Math.max(1, Number(course.creditos) || 1);
+        conflicts.push({
           course: course.clase,
-          day: cell.day,
-          block: cell.block,
-          room: course.aula,
-          teacher: course.docente,
-          note: '',
-          coordinacion: course.coordinacion,
-          carrera: course.carrera,
-          turno: course.turno,
           year,
-          source: 'auto'
-        };
-
-        const alreadyInCell = state.assignments.some((a) => a.day === cell.day && a.block === cell.block && sameContext(a, ctx) && a.year === year);
-        if (alreadyInCell || classAlreadyScheduled(candidate.course, candidate, year)) continue;
-        state.assignments.push(candidate);
-        placed += 1;
-        assignedCount += 1;
+          reason: `Sin espacio contiguo de ${needed} bloque(s) o recursos ocupados.`
+        });
+        continue;
       }
+
+      const placed = placeCourseSequence({
+        ctx,
+        year,
+        course,
+        candidate: candidates[0],
+        slotMeta
+      });
+      assignedCourses.push({
+        course: course.clase,
+        year,
+        day: candidates[0].day,
+        blocks: placed.map((a) => a.block.replace('\n', ' '))
+      });
     }
   }
 
-  const info = `Generación completada: ${assignedCount} bloques asignados usando clases CSV + manuales existentes.`;
+  summarizeAutoGeneration(assignedCourses, conflicts);
+
+  const totalBlocks = assignedCourses.reduce((sum, c) => sum + c.blocks.length, 0);
+  const info = `Generación completada: ${assignedCourses.length} clases asignadas (${totalBlocks} bloques) y ${conflicts.length} conflicto(s).`;
   el.manualStatus.textContent = info;
-  el.manualStatus.className = 'hint status-ok';
+  el.manualStatus.className = conflicts.length ? 'hint status-error' : 'hint status-ok';
   log(info);
   renderSchedule();
 };
