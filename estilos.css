@@ -139,6 +139,11 @@ body {
   margin-top: 16px;
 }
 
+
+.view-hidden {
+  display: none;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -347,6 +352,11 @@ th {
 }
 
 .tab.active {
+  border-color: #b8c8dd;
+  background: #eaf1fd;
+}
+
+.tab[aria-selected="true"] {
   border-color: #b8c8dd;
   background: #eaf1fd;
 }

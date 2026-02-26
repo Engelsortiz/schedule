@@ -203,7 +203,7 @@
           </section>
         </section>
 
-        <section id="config-view" class="view-grid config-grid">
+        <section id="config-view" class="view-grid config-grid view-hidden">
           <section id="turnos-config" class="panel">
             <div class="section-head">
               <h2>Configuración por turno</h2>
@@ -324,9 +324,11 @@
       </main>
     </div>
 
-    <footer class="bottom-tabs">
-      <button class="tab active" data-tab="principal" type="button">Principal</button>
-      <button class="tab" data-tab="config" type="button">Configuración</button>
+    <footer id="footer-tabs" class="bottom-tabs">
+      <button class="tab active" data-tab="principal" type="button" aria-controls="principal-view" aria-selected="true">Principal</button>
+      <button class="tab" data-tab="config" type="button" aria-controls="config-view" aria-selected="false">Configuración</button>
     </footer>
+
+    <script src="app.js"></script>
   </body>
 </html>
