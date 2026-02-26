@@ -43,6 +43,7 @@ const scheduleTable = document.getElementById('schedule-table');
 const cfgInicio = document.getElementById('cfg-inicio');
 const cfgFin = document.getElementById('cfg-fin');
 const cfgBloque = document.getElementById('cfg-bloque');
+const cfgDefaultRoom = document.getElementById('cfg-default-room');
 
 const teacherName = document.getElementById('teacher-name');
 const teacherArea = document.getElementById('teacher-area');
@@ -151,6 +152,14 @@ const renderManualSelectors = () => {
   manualSlot.innerHTML = bloques.map((b) => `<option value="${b}">${b}</option>`).join('');
   manualRoom.innerHTML = aulas.map((a) => `<option value="${a}">${a}</option>`).join('');
   manualTeacher.innerHTML = docentes.map((d) => `<option value="${d}">${d}</option>`).join('');
+
+  if (cfgDefaultRoom && aulas.length) {
+    const options = aulas.map((a) => `<option value="${a}">${a}</option>`).join('');
+    cfgDefaultRoom.innerHTML = options;
+    const selectedRoom = aulas.includes(cfgDefaultRoom.value) ? cfgDefaultRoom.value : aulas[0];
+    cfgDefaultRoom.value = selectedRoom;
+    manualRoom.value = selectedRoom;
+  }
 };
 
 const assignmentAt = (day, slot) => state.assignments.find((a) => a.dia === day && a.bloque === slot);
@@ -311,6 +320,14 @@ btnClearManual.addEventListener('click', () => {
   manualNote.value = '';
   autoStatus.textContent = 'Formulario de asignación limpiado.';
 });
+
+if (cfgDefaultRoom) {
+  cfgDefaultRoom.addEventListener('change', () => {
+    if (cfgDefaultRoom.value) {
+      manualRoom.value = cfgDefaultRoom.value;
+    }
+  });
+}
 btnAuto.addEventListener('click', autoGenerate);
 btnReset.addEventListener('click', resetDemo);
 
