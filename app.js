@@ -48,6 +48,7 @@ const el = {
 
 // ---------- Utilidades ----------
 function logMessage(message, type = 'ok') {
+  if (!el.console) return;
   const line = document.createElement('div');
   line.className = type;
   const ts = new Date().toLocaleTimeString();
@@ -98,8 +99,8 @@ function createBlocks() {
     blocks.push({ label, start: t, end: t + state.blockMinutes, type: 'class' });
   }
 
-  const recesoMin = toMinutes(el.breakStart.value);
-  const almuerzoMin = toMinutes(el.lunchStart.value);
+  const recesoMin = toMinutes(el.breakStart?.value || '10:15');
+  const almuerzoMin = toMinutes(el.lunchStart?.value || '12:00');
 
   return blocks.map((b) => {
     if (b.start === recesoMin) return { ...b, type: 'receso' };
@@ -133,6 +134,7 @@ function saveStorage() {
 
 // ---------- Navegación ----------
 function setView(view) {
+  if (!el.principalView || !el.configView) return;
   const principal = view === 'principal';
   el.principalView.classList.toggle('hidden', !principal);
   el.configView.classList.toggle('hidden', principal);
@@ -140,13 +142,19 @@ function setView(view) {
 }
 
 function setupNavigation() {
-  el.btnMenu.addEventListener('click', () => {
-    el.sidebar.classList.toggle('open');
-  });
+  if (el.btnMenu && el.sidebar) {
+    el.btnMenu.addEventListener('click', () => {
+      el.sidebar.classList.toggle('open');
+    });
+  }
 
   el.tabs.forEach((tab) => {
     tab.addEventListener('click', () => setView(tab.dataset.tab));
   });
+}
+
+function onClick(element, handler) {
+  if (element) element.addEventListener('click', handler);
 }
 
 // ---------- CSV ----------
@@ -214,20 +222,33 @@ async function importCSV() {
 
 // ---------- Gestión manual ----------
 function addManualClase() {
-  const clase = safeText(document.getElementById('manual-clase').value);
+  const claseInput = document.getElementById('manual-clase');
+  const creditosInput = document.getElementById('manual-creditos');
+  const anioInput = document.getElementById('manual-anio');
+  const categoriaInput = document.getElementById('manual-categoria');
+  const tipoInput = document.getElementById('manual-tipo');
+  const aulaInput = document.getElementById('manual-aula');
+  const docenteInput = document.getElementById('manual-docente');
+
+  if (!claseInput || !creditosInput || !anioInput || !categoriaInput || !tipoInput || !aulaInput || !docenteInput) {
+    logMessage('Faltan campos del formulario manual en la vista actual.', 'error');
+    return;
+  }
+
+  const clase = safeText(claseInput.value);
   if (!clase) {
     logMessage('La clase es obligatoria.', 'error');
     return;
   }
   const item = {
     clase,
-    creditos: Math.max(1, Number(document.getElementById('manual-creditos').value) || 1),
+    creditos: Math.max(1, Number(creditosInput.value) || 1),
     compartida: 'No',
-    anio: Number(document.getElementById('manual-anio').value) || 1,
-    categoria: safeText(document.getElementById('manual-categoria').value) || 'General',
-    tipo: safeText(document.getElementById('manual-tipo').value) || 'Teoría',
-    aula: safeText(document.getElementById('manual-aula').value) || 'SIN-AULA',
-    docente: safeText(document.getElementById('manual-docente').value) || 'SIN-DOCENTE',
+    anio: Number(anioInput.value) || 1,
+    categoria: safeText(categoriaInput.value) || 'General',
+    tipo: safeText(tipoInput.value) || 'Teoría',
+    aula: safeText(aulaInput.value) || 'SIN-AULA',
+    docente: safeText(docenteInput.value) || 'SIN-DOCENTE',
     tramos: []
   };
   state.clases.push(item);
@@ -237,6 +258,10 @@ function addManualClase() {
 }
 
 function addDocenteArea() {
+  if (!el.docenteNombre || !el.docenteArea) {
+    logMessage('No se encontraron los campos de docente/área.', 'error');
+    return;
+  }
   const docente = safeText(el.docenteNombre.value);
   const area = safeText(el.docenteArea.value);
   if (!docente || !area) {
@@ -251,6 +276,10 @@ function addDocenteArea() {
 }
 
 function addCarreraCoord() {
+  if (!el.coordNombre || !el.carreraNombre) {
+    logMessage('No se encontraron los campos de coordinación/carrera.', 'error');
+    return;
+  }
   const coordinacion = safeText(el.coordNombre.value);
   const carrera = safeText(el.carreraNombre.value);
   if (!coordinacion || !carrera) {
@@ -380,13 +409,14 @@ function generateSchedule() {
 function clearSchedule() {
   state.schedule = {};
   state.conflictos = [];
-  el.vistaThead.innerHTML = '';
-  el.vistaTbody.innerHTML = '';
+  if (el.vistaThead) el.vistaThead.innerHTML = '';
+  if (el.vistaTbody) el.vistaTbody.innerHTML = '';
   logMessage('Horario limpiado.', 'ok');
 }
 
 // ---------- Render ----------
 function renderClases() {
+  if (!el.clasesTbody) return;
   el.clasesTbody.innerHTML = state.clases.map((c) => `
     <tr>
       <td>${c.clase}</td>
@@ -399,14 +429,17 @@ function renderClases() {
 }
 
 function renderDocentes() {
+  if (!el.docentesList) return;
   el.docentesList.innerHTML = state.docentes.map((d) => `<li><strong>${d.docente}</strong> · ${d.area}</li>`).join('');
 }
 
 function renderCarreras() {
+  if (!el.carrerasList) return;
   el.carrerasList.innerHTML = state.carreras.map((c) => `<li><strong>${c.coordinacion}</strong> → ${c.carrera}</li>`).join('');
 }
 
 function renderSchedule(blocks = createBlocks(), days = getDaysByTurno(state.turno)) {
+  if (!el.vistaThead || !el.vistaTbody) return;
   el.vistaThead.innerHTML = `<tr><th>Bloque</th>${days.map((d) => `<th>${d}</th>`).join('')}</tr>`;
 
   el.vistaTbody.innerHTML = blocks.map((b) => {
@@ -422,9 +455,9 @@ function renderSchedule(blocks = createBlocks(), days = getDaysByTurno(state.tur
 }
 
 function renderAll() {
-  el.turnoSelect.value = state.turno;
-  el.cfgTurnoDefault.value = state.turno;
-  el.cfgBlockMin.value = state.blockMinutes;
+  if (el.turnoSelect) el.turnoSelect.value = state.turno;
+  if (el.cfgTurnoDefault) el.cfgTurnoDefault.value = state.turno;
+  if (el.cfgBlockMin) el.cfgBlockMin.value = state.blockMinutes;
   renderClases();
   renderDocentes();
   renderCarreras();
@@ -432,14 +465,15 @@ function renderAll() {
 }
 
 // ---------- Eventos ----------
-el.btnImportCsv.addEventListener('click', importCSV);
-el.btnAddClase.addEventListener('click', addManualClase);
-el.btnGenerar.addEventListener('click', generateSchedule);
-el.btnLimpiar.addEventListener('click', clearSchedule);
-el.btnAddDocente.addEventListener('click', addDocenteArea);
-el.btnAddCarrera.addEventListener('click', addCarreraCoord);
+onClick(el.btnImportCsv, importCSV);
+onClick(el.btnAddClase, addManualClase);
+onClick(el.btnGenerar, generateSchedule);
+onClick(el.btnLimpiar, clearSchedule);
+onClick(el.btnAddDocente, addDocenteArea);
+onClick(el.btnAddCarrera, addCarreraCoord);
 
-el.btnSaveConfig.addEventListener('click', () => {
+onClick(el.btnSaveConfig, () => {
+  if (!el.cfgTurnoDefault || !el.cfgBlockMin || !el.turnoSelect) return;
   state.turno = el.cfgTurnoDefault.value;
   state.blockMinutes = Math.max(30, Number(el.cfgBlockMin.value) || 45);
   el.turnoSelect.value = state.turno;
@@ -447,7 +481,7 @@ el.btnSaveConfig.addEventListener('click', () => {
   logMessage('Configuración guardada en localStorage.', 'ok');
 });
 
-el.turnoSelect.addEventListener('change', () => {
+if (el.turnoSelect) el.turnoSelect.addEventListener('change', () => {
   state.turno = el.turnoSelect.value;
   saveStorage();
   renderSchedule();
