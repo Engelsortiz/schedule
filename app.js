@@ -307,11 +307,9 @@ function initSchedule(blocks, days) {
 function hasConflict(day, slot, clase) {
   const current = state.schedule[day][slot];
   if (current) return true;
-  for (const d of Object.keys(state.schedule)) {
-    const cell = state.schedule[d][slot];
-    if (!cell || cell.type) continue;
-    if (cell.docente === clase.docente || cell.aula === clase.aula) return true;
-  }
+  const cell = state.schedule[day][slot];
+  if (!cell || cell.type) return false;
+  if (cell.docente === clase.docente || cell.aula === clase.aula) return true;
   return false;
 }
 
@@ -320,13 +318,39 @@ function dayLoad(day) {
 }
 
 function findContiguousSlots(day, needed, blocks, clase) {
-  const blockLabels = blocks.filter((b) => b.type === 'class').map((b) => b.label);
-  for (let i = 0; i <= blockLabels.length - needed; i += 1) {
-    const slice = blockLabels.slice(i, i + needed);
-    const free = slice.every((slot) => !hasConflict(day, slot, clase));
-    if (free) return slice;
+  // Recorremos la secuencia completa para evitar saltar recesos/almuerzos.
+  for (let i = 0; i <= blocks.length - needed; i += 1) {
+    const window = blocks.slice(i, i + needed);
+    const validWindow = window.every((b) => b.type === 'class' && !hasConflict(day, b.label, clase));
+    if (validWindow) return window.map((b) => b.label);
   }
   return null;
+}
+
+function explainUnassigned(clase, days, blocks) {
+  const needed = Math.max(1, Number(clase.creditos) || 1);
+  let hasContiguousWindow = false;
+  let blockedByAula = false;
+  let blockedByDocente = false;
+
+  for (const day of days) {
+    for (let i = 0; i <= blocks.length - needed; i += 1) {
+      const window = blocks.slice(i, i + needed);
+      if (!window.every((b) => b.type === 'class')) continue;
+      hasContiguousWindow = true;
+
+      const collisions = window.map((b) => state.schedule[day][b.label]).filter((entry) => entry && !entry.type);
+      if (!collisions.length) return 'sin motivo conocido';
+      if (collisions.some((entry) => entry.aula === clase.aula)) blockedByAula = true;
+      if (collisions.some((entry) => entry.docente === clase.docente)) blockedByDocente = true;
+    }
+  }
+
+  if (!hasContiguousWindow) return 'no hay bloques contiguos';
+  if (blockedByAula && blockedByDocente) return 'choque de aula y docente';
+  if (blockedByAula) return 'choque de aula';
+  if (blockedByDocente) return 'choque de docente';
+  return 'bloques ocupados por otras clases';
 }
 
 function placeSlots(day, slots, clase) {
@@ -352,42 +376,39 @@ function generateSchedule() {
   initSchedule(blocks, days);
   state.conflictos = [];
 
-  const sorted = [...state.clases].sort((a, b) => b.creditos - a.creditos);
+  // Se procesa una sola vez por clase y se priorizan las de mayor cantidad de créditos.
+  const seen = new Set();
+  const sorted = state.clases
+    .map((clase) => ({
+      ...clase,
+      _id: `${normalize(clase.clase)}|${normalize(clase.docente)}|${normalize(clase.aula)}`
+    }))
+    .filter((clase) => {
+      if (seen.has(clase._id)) return false;
+      seen.add(clase._id);
+      return true;
+    })
+    .sort((a, b) => b.creditos - a.creditos);
+
+  let nextStartDay = 0;
 
   sorted.forEach((clase) => {
-    const needed = clase.creditos; // 1 crédito = 1 bloque de 45min
-    const candidates = [...days].sort((a, b) => dayLoad(a) - dayLoad(b));
+    const needed = Math.max(1, Number(clase.creditos) || 1); // 1 crédito = 1 bloque de 45min
+    const candidates = days.map((_, offset) => days[(nextStartDay + offset) % days.length]);
     let placed = false;
 
     for (const day of candidates) {
       const contiguous = findContiguousSlots(day, needed, blocks, clase);
       if (contiguous) {
         placeSlots(day, contiguous, clase);
+        nextStartDay = (days.indexOf(day) + 1) % days.length;
         placed = true;
         break;
       }
     }
 
-    // Diurno permite dividir en dos tramos en el mismo día
-    if (!placed && state.turno === 'diurno') {
-      for (const day of candidates) {
-        const free = blocks
-          .filter((b) => b.type === 'class')
-          .map((b) => b.label)
-          .filter((slot) => !hasConflict(day, slot, clase));
-        if (free.length >= needed) {
-          const first = Math.ceil(needed / 2);
-          const tramo1 = free.slice(0, first);
-          const tramo2 = free.slice(first, needed);
-          placeSlots(day, tramo1.concat(tramo2), clase);
-          placed = true;
-          break;
-        }
-      }
-    }
-
     if (!placed) {
-      state.conflictos.push(clase);
+      state.conflictos.push({ clase, motivo: explainUnassigned(clase, days, blocks) });
     }
   });
 
@@ -402,7 +423,9 @@ function generateSchedule() {
   logMessage(`Generación finalizada: ${assigned}/${sorted.length} clases asignadas.`, 'ok');
   logMessage(`Conflictos: ${state.conflictos.length}. Bloques libres: ${totalFree}.`, state.conflictos.length ? 'warn' : 'ok');
   if (state.conflictos.length) {
-    logMessage(`Clases en conflicto: ${state.conflictos.map((c) => c.clase).join(', ')}`, 'warn');
+    state.conflictos.forEach((item) => {
+      logMessage(`No asignada: ${item.clase.clase} → ${item.motivo}.`, 'warn');
+    });
   }
 }
 
