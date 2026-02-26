@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generador de Horarios Académicos</title>
+    <title>Schedule Studio | Generador Académico</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="estilos.css" />
@@ -20,9 +20,13 @@
 
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
+        <div class="brand-card">
+          <strong>Schedule Studio</strong>
+          <small>Planificación inteligente</small>
+        </div>
         <nav class="side-nav">
           <a href="#seccion-csv">Carga CSV</a>
-          <a href="#seccion-manual">Asignación manual</a>
+          <a href="#seccion-manual">Asignación</a>
           <a href="#seccion-automatica">Generación automática</a>
           <a href="#seccion-vista">Vista</a>
         </nav>
@@ -72,6 +76,7 @@
                 <tr>
                   <th>Clase</th>
                   <th>Créditos</th>
+                  <th>Bloques</th>
                   <th>Tipo</th>
                   <th>Aula</th>
                   <th>Docente</th>
@@ -86,7 +91,7 @@
         <section class="panel" id="seccion-manual">
           <div class="panel-header">
             <h2>Asignación manual</h2>
-            <p class="hint">Agrega excepciones antes de generar automáticamente.</p>
+            <p class="hint">Selecciona una celda de la tabla para abrir el panel de asignación visual.</p>
           </div>
 
           <div class="form-grid">
@@ -110,16 +115,22 @@
               Bloque inicial
               <input type="number" id="manualBloque" min="1" value="1" />
             </label>
-            <button id="agregarManual" class="primary-btn">Agregar asignación</button>
+            <button id="agregarManual" class="primary-btn" type="button">Agregar asignación</button>
+          </div>
+
+          <div class="manual-tools">
+            <button id="toggleManualMode" class="ghost-btn" type="button">Modo selección visual: OFF</button>
+            <small id="manualHint">Haz clic en un slot de "Vista" para asignar o mover clases.</small>
           </div>
 
           <ul id="listaAsignacionesManual" class="manual-list"></ul>
+          <div id="conflictSuggestions" class="suggestions"></div>
         </section>
 
         <section class="panel" id="seccion-automatica">
           <div class="panel-header">
             <h2>Generación automática</h2>
-            <p class="hint">Prioriza créditos altos, balancea por día y minimiza conflictos.</p>
+            <p class="hint">Balancea carga por día, respeta turnos y evita conflictos de recursos.</p>
           </div>
 
           <div class="form-grid">
@@ -131,17 +142,18 @@
               Máximo por grupo
               <input type="number" id="maxGrupoInput" min="1" value="35" />
             </label>
-            <button id="btnGenerar" class="primary-btn">Generar horario</button>
-            <button id="btnLimpiar" class="ghost-btn">Limpiar</button>
+            <button id="btnGenerar" class="primary-btn" type="button">Generar horario</button>
+            <button id="btnLimpiar" class="ghost-btn" type="button">Limpiar</button>
           </div>
 
           <div class="group-result" id="groupResult"></div>
+          <div id="generationList" class="generation-list"></div>
         </section>
 
         <section class="panel" id="seccion-vista">
           <div class="panel-header">
             <h2>Vista</h2>
-            <p class="hint">Tabla dinámica por días y bloques de 45 minutos.</p>
+            <p class="hint">Tabla editable por bloques de 45 minutos. Soporta click, validación y drag & drop.</p>
           </div>
           <div class="table-wrap" id="horarioWrap"></div>
 
@@ -151,9 +163,44 @@
     </div>
 
     <footer class="footer-tabs" id="footerTabs">
-      <button class="tab-btn active" data-tab="principal">Principal</button>
-      <button class="tab-btn" data-tab="configuracion">Configuración</button>
+      <button class="tab-btn active" data-tab="principal" type="button">Principal</button>
+      <button class="tab-btn" data-tab="configuracion" type="button">Configuración</button>
     </footer>
+
+    <dialog id="manualModal" class="modal">
+      <form method="dialog" class="modal-card" id="manualModalForm">
+        <header>
+          <h3>Asignación visual</h3>
+          <button id="closeManualModal" class="icon-btn" type="submit" aria-label="Cerrar">✕</button>
+        </header>
+
+        <div class="modal-grid">
+          <label>
+            Clase
+            <select id="modalManualClase"></select>
+          </label>
+          <label>
+            Día
+            <input id="modalManualDia" type="text" readonly />
+          </label>
+          <label>
+            Bloque inicial
+            <input id="modalManualBloque" type="number" readonly />
+          </label>
+          <label>
+            Bloques sugeridos
+            <input id="modalBloquesSugeridos" type="text" readonly />
+          </label>
+        </div>
+
+        <div class="modal-feedback" id="modalFeedback"></div>
+
+        <footer class="modal-actions">
+          <button id="btnGuardarModal" class="primary-btn" type="button">Aplicar asignación</button>
+          <button id="btnLiberarSlot" class="ghost-btn" type="button">Liberar slot seleccionado</button>
+        </footer>
+      </form>
+    </dialog>
 
     <script src="app.js"></script>
   </body>
