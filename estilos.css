@@ -298,12 +298,25 @@ tr:hover td { background: #f9fbff; }
   padding: 1rem 1.25rem 1.2rem;
 }
 #config-view .form-grid {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  align-items: end;
-  gap: 0.85rem 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
 }
-#config-view .form-grid label {
+#config-view .field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+#config-view .field label {
+  margin: 0;
   font-size: 0.81rem;
+  font-weight: 600;
+  color: #334155;
+}
+#config-view .field input,
+#config-view .field select {
+  width: 100%;
+  min-width: 0;
 }
 #config-view input,
 #config-view select {
@@ -371,13 +384,19 @@ tr:hover td { background: #f9fbff; }
     gap: 1.2rem;
   }
   #config-view .form-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   #config-view .form-grid .btn {
-    grid-column: 4 / 5;
+    grid-column: 3 / 4;
     justify-self: end;
     align-self: end;
     width: 100%;
     max-width: 210px;
+  }
+}
+
+@media (max-width: 819px) {
+  #config-view .form-grid.row-3 {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
