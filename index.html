@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generador de Horarios Académicos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+  </head>
+  <body>
+    <header class="topbar" id="topbar">
+      <button id="menuToggle" class="icon-btn" aria-label="Alternar menú">☰</button>
+      <h1>Generador de Horarios Académicos</h1>
+    </header>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <nav class="side-nav">
+          <a href="#seccion-csv">Carga CSV</a>
+          <a href="#seccion-manual">Asignación manual</a>
+          <a href="#seccion-automatica">Generación automática</a>
+          <a href="#seccion-vista">Vista</a>
+        </nav>
+      </aside>
+
+      <main class="main-content" id="mainContent">
+        <section class="panel" id="seccion-csv">
+          <div class="panel-header">
+            <h2>Carga CSV</h2>
+            <p class="hint">Columnas requeridas: clase, creditos, tipo, aula, docente.</p>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Archivo CSV
+              <input type="file" id="csvInput" accept=".csv,text/csv" />
+            </label>
+            <label>
+              Tipo de jornada
+              <select id="turnoSelect">
+                <option value="diurno">Diurno</option>
+                <option value="sabatino">Sabatino</option>
+                <option value="dominical">Dominical</option>
+              </select>
+            </label>
+            <label>
+              Hora inicio receso
+              <input type="time" id="recesoInicio" value="10:15" />
+            </label>
+            <label>
+              Hora fin receso
+              <input type="time" id="recesoFin" value="11:00" />
+            </label>
+            <label>
+              Hora inicio almuerzo
+              <input type="time" id="almuerzoInicio" value="12:30" />
+            </label>
+            <label>
+              Hora fin almuerzo
+              <input type="time" id="almuerzoFin" value="13:15" />
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table id="tablaClases">
+              <thead>
+                <tr>
+                  <th>Clase</th>
+                  <th>Créditos</th>
+                  <th>Tipo</th>
+                  <th>Aula</th>
+                  <th>Docente</th>
+                  <th>Tags</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="seccion-manual">
+          <div class="panel-header">
+            <h2>Asignación manual</h2>
+            <p class="hint">Agrega excepciones antes de generar automáticamente.</p>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Clase
+              <select id="manualClase"></select>
+            </label>
+            <label>
+              Día
+              <select id="manualDia">
+                <option value="Lunes">Lunes</option>
+                <option value="Martes">Martes</option>
+                <option value="Miércoles">Miércoles</option>
+                <option value="Jueves">Jueves</option>
+                <option value="Viernes">Viernes</option>
+                <option value="Sábado">Sábado</option>
+                <option value="Domingo">Domingo</option>
+              </select>
+            </label>
+            <label>
+              Bloque inicial
+              <input type="number" id="manualBloque" min="1" value="1" />
+            </label>
+            <button id="agregarManual" class="primary-btn">Agregar asignación</button>
+          </div>
+
+          <ul id="listaAsignacionesManual" class="manual-list"></ul>
+        </section>
+
+        <section class="panel" id="seccion-automatica">
+          <div class="panel-header">
+            <h2>Generación automática</h2>
+            <p class="hint">Prioriza créditos altos, balancea por día y minimiza conflictos.</p>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              Matrícula total
+              <input type="number" id="matriculaInput" min="1" value="120" />
+            </label>
+            <label>
+              Máximo por grupo
+              <input type="number" id="maxGrupoInput" min="1" value="35" />
+            </label>
+            <button id="btnGenerar" class="primary-btn">Generar horario</button>
+            <button id="btnLimpiar" class="ghost-btn">Limpiar</button>
+          </div>
+
+          <div class="group-result" id="groupResult"></div>
+        </section>
+
+        <section class="panel" id="seccion-vista">
+          <div class="panel-header">
+            <h2>Vista</h2>
+            <p class="hint">Tabla dinámica por días y bloques de 45 minutos.</p>
+          </div>
+          <div class="table-wrap" id="horarioWrap"></div>
+
+          <div class="console" id="consoleOutput"></div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer-tabs" id="footerTabs">
+      <button class="tab-btn active" data-tab="principal">Principal</button>
+      <button class="tab-btn" data-tab="configuracion">Configuración</button>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
