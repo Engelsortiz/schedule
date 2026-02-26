@@ -7,52 +7,68 @@
     <link rel="stylesheet" href="estilos.css" />
   </head>
   <body>
-    <header class="topbar">
-      <button id="btn-menu" class="menu-btn" aria-label="Abrir menú">☰</button>
+    <header class="app-header">
+      <button id="btn-menu" class="icon-btn" aria-label="Abrir menú">☰</button>
       <h1>Universidad de Ciencias Comerciales · Generador de Horarios</h1>
     </header>
 
-    <div class="layout">
+    <div class="app-layout">
       <aside id="sidebar" class="sidebar">
         <h2>Navegación rápida</h2>
-        <div class="menu-list">
-          <a class="menu-item" href="#panel-csv">1) Carga CSV y clases</a>
-          <a class="menu-item" href="#panel-manual">2) Asignación / cambios manuales</a>
-          <a class="menu-item" href="#panel-auto">3) Generación automática</a>
-          <a class="menu-item" href="#panel-vista">4) Vista por coordinación/carrera/turno</a>
-        </div>
+        <nav class="quick-nav">
+          <a class="quick-link" href="#panel-csv">1) Carga CSV y clases</a>
+          <a class="quick-link" href="#panel-manual">2) Asignación / cambios manuales</a>
+          <a class="quick-link" href="#panel-auto">3) Generación automática</a>
+          <a class="quick-link" href="#panel-vista">4) Vista por coordinación/carrera/turno</a>
+        </nav>
       </aside>
 
-      <main>
+      <main class="content-area">
         <section id="principal-view">
           <details id="panel-csv" class="panel" open>
-            <summary>1) Cargar clases por CSV y listado de clases <span class="summary-arrow">▲</span></summary>
+            <summary>1) Cargar clases por CSV y listado de clases</summary>
             <div class="panel-body">
-              <p class="hint">Columnas esperadas: <strong>clase,creditos,docente,aula</strong></p>
-              <div class="row3">
-                <label>Coordinación<select id="csv-coordinacion"><option>Arquitectura</option><option>Ingeniería</option></select></label>
-                <label>Carrera<select id="csv-carrera"><option>Arquitectura</option><option>Diseño Gráfico</option></select></label>
-                <label>Turno<select id="csv-turno"><option>Diurno</option><option>Nocturno</option></select></label>
+              <p class="hint">Columnas esperadas del CSV: <strong>clase,creditos,docente,aula</strong>.</p>
+              <div class="grid-3">
+                <label>Coordinación<select id="csv-coordinacion"></select></label>
+                <label>Carrera<select id="csv-carrera"></select></label>
+                <label>Turno<select id="csv-turno"></select></label>
               </div>
-              <input id="csv-input" type="file" accept=".csv,text/csv" />
-              <button id="btn-importar-csv">Importar CSV</button>
+              <div class="inline-actions">
+                <input id="csv-input" type="file" accept=".csv,text/csv" />
+                <button id="btn-importar-csv" class="btn-main">Importar CSV</button>
+              </div>
               <p id="csv-status" class="hint">Sin importación todavía.</p>
-              <div class="table-wrap"><table><thead><tr><th>Coordinación</th><th>Carrera</th><th>Clase</th><th>Créditos</th><th>Docente</th><th>Aula</th></tr></thead><tbody id="courses-body"></tbody></table></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Coordinación</th>
+                      <th>Carrera</th>
+                      <th>Clase</th>
+                      <th>Características</th>
+                      <th>Docente preferido</th>
+                      <th>Aula</th>
+                    </tr>
+                  </thead>
+                  <tbody id="courses-body"></tbody>
+                </table>
+              </div>
             </div>
           </details>
 
           <details id="panel-manual" class="panel" open>
-            <summary>2) Asignación y cambios manuales <span class="summary-arrow">▲</span></summary>
+            <summary>2) Asignación y cambios manuales</summary>
             <div class="panel-body">
-              <div class="row">
-                <label>Coordinación<select><option>Arquitectura</option></select></label>
-                <label>Turno<select><option>Diurno</option></select></label>
+              <div class="grid-2">
+                <label>Coordinación<select id="manual-coordinacion"></select></label>
+                <label>Turno<select id="manual-turno"></select></label>
               </div>
-              <div class="actions">
-                <button id="btn-guardar-asignacion" class="secondary">Agregar clase manualmente</button>
-                <button id="btn-limpiar-asignacion" class="ghost">Cambiar clase existente</button>
+              <div class="inline-actions">
+                <button id="btn-guardar-asignacion" class="btn-main">Agregar clase manualmente</button>
+                <button id="btn-cambiar-asignacion" class="btn-outline">Cambiar clase existente</button>
               </div>
-              <div class="row3">
+              <div class="grid-3">
                 <label>Clase<select id="manual-course"></select></label>
                 <label>Día<select id="manual-day"></select></label>
                 <label>Bloque<select id="manual-slot"></select></label>
@@ -60,70 +76,106 @@
                 <label>Docente<select id="manual-teacher"></select></label>
                 <label>Nota<input id="manual-note" type="text" placeholder="Opcional" /></label>
               </div>
-              <p id="auto-status" class="hint">Sin acciones todavía.</p>
+              <p id="manual-status" class="hint">Sin acciones todavía.</p>
             </div>
           </details>
 
-          <div id="footer-tabs" class="footer-tabs" role="tablist">
-            <button class="tab active" data-tab="principal">📋 Principal</button>
-            <button class="tab" data-tab="config">⚙️ Configuración</button>
-          </div>
-
           <details id="panel-auto" class="panel" open>
-            <summary>3) Generación automática <span class="summary-arrow">▲</span></summary>
+            <summary>3) Generación automática por carrera</summary>
             <div class="panel-body">
-              <p class="hint">Genera horario únicamente para la coordinación/carrera/turno seleccionadas en la carga CSV.</p>
-              <div class="row3">
-                <label>Coordinación<select><option>Arquitectura</option></select></label>
-                <label>Carrera<select><option>Arquitectura</option></select></label>
-                <label>Turno<select><option>Diurno</option></select></label>
+              <p class="hint">No se permiten choques de docente o aula en el mismo bloque, ni duplicar una clase en múltiples bloques.</p>
+              <div class="grid-3">
+                <label>Coordinación<select id="auto-coordinacion"></select></label>
+                <label>Carrera<select id="auto-carrera"></select></label>
+                <label>Turno<select id="auto-turno"></select></label>
               </div>
-              <div class="row">
-                <label>Inicio<input id="cfg-inicio" type="time" value="08:00" /></label>
-                <label>Fin<input id="cfg-fin" type="time" value="14:30" /></label>
+              <div class="grid-3">
+                <label>Periodo<select id="auto-periodo"></select></label>
+                <label>Año<input id="auto-anio" type="number" min="2020" max="2100" value="2026" /></label>
+                <label>Inicio jornada<input id="cfg-inicio" type="time" value="08:00" /></label>
               </div>
-              <div class="actions">
-                <button id="btn-generar-auto" class="secondary">Generar automáticamente</button>
-                <button id="btn-reiniciar-demo" class="ghost">Reiniciar demo</button>
+              <div class="grid-2">
+                <label>Fin jornada<input id="cfg-fin" type="time" value="14:30" /></label>
+                <label>Minutos por bloque<input id="cfg-bloque" type="number" min="30" max="120" value="45" /></label>
+              </div>
+              <div class="inline-actions">
+                <button id="btn-generar-auto" class="btn-main">Generar automáticamente</button>
+                <button id="btn-reiniciar" class="btn-outline">Reiniciar demo</button>
               </div>
               <div id="log-console" class="console"></div>
             </div>
           </details>
 
           <details id="panel-vista" class="panel" open>
-            <summary>4) Vista por coordinación / carrera / turno <span class="summary-arrow">▲</span></summary>
+            <summary>4) Vista por coordinación / carrera / turno</summary>
             <div class="panel-body">
-              <div class="row3">
-                <label>Coordinación<select><option>Arquitectura</option></select></label>
-                <label>Carrera<select><option>Arquitectura</option></select></label>
-                <label>Turno<select><option>Diurno</option></select></label>
+              <div class="grid-3">
+                <label>Coordinación<select id="view-coordinacion"></select></label>
+                <label>Carrera<select id="view-carrera"></select></label>
+                <label>Turno<select id="view-turno"></select></label>
               </div>
-              <div class="table-wrap"><table id="schedule-table"></table></div>
+              <div class="table-wrap">
+                <table id="schedule-table"></table>
+              </div>
             </div>
           </details>
         </section>
 
         <section id="config-view" class="view-hidden">
           <details class="panel" open>
-            <summary>Configuración de docentes y carreras <span class="summary-arrow">▲</span></summary>
+            <summary>Configuración por turno</summary>
             <div class="panel-body">
-              <div class="row">
-                <label>Docente<input id="teacher-name" /></label>
-                <label>Área<input id="teacher-area" /></label>
+              <div class="grid-3">
+                <label>Turno<select id="cfg-turno"></select></label>
+                <label>Duración por bloque<input id="cfg-turno-bloque" type="number" value="45" min="30" max="120" /></label>
+                <label>Máx. turnos por día<input id="cfg-turno-max" type="number" value="8" min="1" max="16" /></label>
               </div>
-              <button id="btn-add-teacher">Agregar docente</button>
-              <ul id="teacher-list"></ul>
-              <div class="row">
-                <label>Coordinación<input id="coord-name" /></label>
-                <label>Carrera<input id="career-name" /></label>
+              <button id="btn-guardar-turno" class="btn-main">Guardar turno</button>
+              <p id="cfg-turno-status" class="hint">Sin cambios.</p>
+            </div>
+          </details>
+
+          <details class="panel" open>
+            <summary>Gestión de docentes y áreas</summary>
+            <div class="panel-body">
+              <div class="grid-2">
+                <label>Docente<input id="teacher-name" type="text" /></label>
+                <label>Área<input id="teacher-area" type="text" /></label>
               </div>
-              <button id="btn-add-career">Agregar carrera</button>
-              <ul id="career-list"></ul>
+              <button id="btn-add-teacher" class="btn-main">Nuevo docente</button>
+              <table>
+                <thead><tr><th>Docente</th><th>Área</th></tr></thead>
+                <tbody id="teacher-body"></tbody>
+              </table>
+            </div>
+          </details>
+
+          <details class="panel" open>
+            <summary>Coordinaciones y carreras</summary>
+            <div class="panel-body">
+              <div class="grid-3">
+                <label>Nueva coordinación<input id="coord-name" type="text" /></label>
+                <label>Carrera<select id="coord-target"></select></label>
+                <label>Nueva carrera<input id="career-name" type="text" /></label>
+              </div>
+              <div class="inline-actions">
+                <button id="btn-add-coord" class="btn-main">Agregar coordinación</button>
+                <button id="btn-link-career" class="btn-outline">Agregar carrera a coordinación</button>
+              </div>
+              <table>
+                <thead><tr><th>Coordinación</th><th>Carreras</th></tr></thead>
+                <tbody id="coord-body"></tbody>
+              </table>
             </div>
           </details>
         </section>
       </main>
     </div>
+
+    <footer id="footer-tabs" class="footer-tabs" role="tablist">
+      <button class="tab active" data-tab="principal">📋 Principal</button>
+      <button class="tab" data-tab="config">⚙️ Configuración</button>
+    </footer>
 
     <script src="app.js"></script>
   </body>
