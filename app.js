@@ -303,14 +303,17 @@ byId('btn-add-period').addEventListener('click', () => {
 });
 byId('period-turno').addEventListener('change', renderPeriodList);
 
+const activateTab = (tab) => {
+  const config = tab === 'config';
+  document.querySelectorAll('#footer-tabs .tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === tab));
+  principalView.classList.toggle('view-hidden', config);
+  configView.classList.toggle('view-hidden', !config);
+  const target = config ? configView : principalView;
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 document.querySelectorAll('#footer-tabs .tab').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#footer-tabs .tab').forEach((t) => t.classList.remove('active'));
-    btn.classList.add('active');
-    const config = btn.dataset.tab === 'config';
-    principalView.classList.toggle('view-hidden', config);
-    configView.classList.toggle('view-hidden', !config);
-  });
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
 });
 
 renderCourses();
@@ -321,4 +324,5 @@ renderPeriodList();
 byId('teacher-list').innerHTML = state.teachers.map((t) => `<li><strong>${t.nombre}</strong> · ${t.area}</li>`).join('');
 byId('career-list').innerHTML = state.careers.map((c) => `<li>${c.coordinacion} → ${c.carrera}</li>`).join('');
 byId('cfg-turno').dispatchEvent(new Event('change'));
+if (window.location.hash === '#config-view') activateTab('config');
 logMessage('Interfaz iniciada.');
