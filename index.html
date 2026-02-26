@@ -157,7 +157,7 @@
             </div>
             <div class="panel-body form-grid row-3">
               <div class="field">
-                <label>Turno por defecto</label>
+                <label for="cfg-turno-default">Turno por defecto</label>
                 <select id="cfg-turno-default">
                   <option value="diurno">Diurno</option>
                   <option value="sabatino">Sabatino</option>
@@ -165,7 +165,7 @@
                 </select>
               </div>
               <div class="field">
-                <label>Duración de bloque (min)</label>
+                <label for="cfg-block-min">Duración de bloque (min)</label>
                 <input id="cfg-block-min" type="number" value="45" min="30" max="90" />
               </div>
               <div class="field">
@@ -200,7 +200,10 @@
                 <label>Almuerzo fin</label>
                 <input type="time" value="13:00" />
               </div>
-              <button id="btn-save-config" class="btn btn-primary" type="button">Guardar turno</button>
+              <div class="field field-action">
+                <span class="field-spacer" aria-hidden="true"></span>
+                <button id="btn-save-config" class="btn btn-primary" type="button">Guardar turno</button>
+              </div>
             </div>
           </section>
 

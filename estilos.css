@@ -307,6 +307,12 @@ tr:hover td { background: #f9fbff; }
   gap: 6px;
   min-width: 0;
 }
+#config-view .field-action {
+  align-self: end;
+}
+#config-view .field-spacer {
+  min-height: 19px;
+}
 #config-view .field label {
   margin: 0;
   font-size: 0.81rem;
@@ -326,8 +332,9 @@ tr:hover td { background: #f9fbff; }
   background: #fff;
 }
 #config-view .form-grid .btn {
-  justify-self: start;
-  min-width: 176px;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
   background: #0f172a;
 }
 #config-view .form-grid .btn.btn-primary {
@@ -386,12 +393,8 @@ tr:hover td { background: #f9fbff; }
   #config-view .form-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  #config-view .form-grid .btn {
+  #config-view .field-action {
     grid-column: 3 / 4;
-    justify-self: end;
-    align-self: end;
-    width: 100%;
-    max-width: 210px;
   }
 }
 
