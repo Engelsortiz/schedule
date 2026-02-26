@@ -1,0 +1,273 @@
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --border: #d8dce5;
+  --text: #1d2433;
+  --muted: #667085;
+  --dark: #202a3d;
+  --accent: #3962f4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 62px;
+  background: var(--dark);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  z-index: 20;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.topbar h1 {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  margin-top: 62px;
+  min-height: calc(100vh - 112px);
+}
+
+.sidebar {
+  background: #e9edf4;
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  position: sticky;
+  top: 62px;
+  height: calc(100vh - 112px);
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-nav a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.main-content {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+.panel-header h2 {
+  margin: 0;
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.form-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.primary-btn,
+.ghost-btn {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary-btn {
+  background: var(--dark);
+  color: #fff;
+}
+
+.ghost-btn {
+  background: #fff;
+  border-color: var(--border);
+}
+
+.table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f0f3f9;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e9efff;
+  color: #3049a5;
+  margin-right: 6px;
+}
+
+.tag-reservado {
+  background: #fff4d6;
+  color: #8b6900;
+}
+
+.manual-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.group-result {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.console {
+  margin-top: 14px;
+  background: #121826;
+  color: #cfe0ff;
+  border-radius: 10px;
+  min-height: 150px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+}
+
+.footer-tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: #fff;
+  z-index: 20;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab-btn.active {
+  background: #e9efff;
+  color: #2943aa;
+}
+
+.hidden-config .panel:not(#seccion-automatica) {
+  display: none;
+}
+
+.hidden-config #seccion-automatica {
+  order: -1;
+}
+
+.sidebar.hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    height: auto;
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+  }
+
+  .side-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .side-nav a {
+    white-space: nowrap;
+  }
+}
