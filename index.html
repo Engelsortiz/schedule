@@ -153,7 +153,7 @@
           <section id="turnos-config" class="panel">
             <div class="panel-header">
               <h3>Configuración de turno</h3>
-              <p>Define los parámetros globales para organizar los bloques académicos.</p>
+              <p>Define reglas de bloque, cupos máximos y franjas activas para cada turno.</p>
             </div>
             <div class="panel-body form-grid row-4">
               <label>Turno por defecto
@@ -166,8 +166,24 @@
               <label>Duración de bloque (min)
                 <input id="cfg-block-min" type="number" value="45" min="30" max="90" />
               </label>
-              <label>Hora de inicio sugerida
-                <input type="time" value="07:00" />
+              <label>Créditos por bloque
+                <input type="number" value="1" min="1" max="3" />
+              </label>
+              <label>Máximo por carrera
+                <input type="number" value="6" min="1" max="12" />
+              </label>
+              <label>Días habilitados
+                <select>
+                  <option>Lunes a viernes</option>
+                  <option>Lunes a sábado</option>
+                  <option>Fin de semana</option>
+                </select>
+              </label>
+              <label>Receso
+                <input type="time" value="10:15" />
+              </label>
+              <label>Almuerzo
+                <input type="time" value="12:00" />
               </label>
               <button id="btn-save-config" class="btn btn-primary" type="button">Guardar turno</button>
             </div>
@@ -176,7 +192,7 @@
           <section id="periodos-config" class="panel">
             <div class="panel-header">
               <h3>Configuración de periodos</h3>
-              <p>Administra periodos académicos y ventanas de planificación.</p>
+              <p>Crea periodos académicos con fecha de inicio y fecha de fin.</p>
             </div>
             <div class="panel-body form-grid row-4">
               <label>Periodo
@@ -201,7 +217,7 @@
           <section id="docentes-areas" class="panel">
             <div class="panel-header">
               <h3>Docentes y áreas</h3>
-              <p>Gestiona docentes y su área académica de forma centralizada.</p>
+              <p>Registra docentes junto a su área para asignación de carga académica.</p>
             </div>
             <div class="panel-body form-grid row-4">
               <label>Docente
@@ -209,9 +225,6 @@
               </label>
               <label>Área
                 <input id="docente-area" type="text" placeholder="Área académica" />
-              </label>
-              <label>Correo institucional
-                <input type="email" placeholder="usuario@institucion.edu" />
               </label>
               <button id="btn-add-docente" class="btn btn-dark" type="button">Añadir docente</button>
             </div>
@@ -223,7 +236,7 @@
           <section id="coordinaciones-carreras" class="panel">
             <div class="panel-header">
               <h3>Coordinaciones y carreras</h3>
-              <p>Organiza la estructura académica y su distribución por carrera.</p>
+              <p>Asocia coordinaciones académicas con cada carrera activa.</p>
             </div>
             <div class="panel-body form-grid row-4">
               <label>Coordinación
@@ -231,9 +244,6 @@
               </label>
               <label>Carrera
                 <input id="carrera-nombre" type="text" placeholder="Carrera" />
-              </label>
-              <label>Plan de estudio
-                <input type="text" placeholder="Ej: 2024" />
               </label>
               <button id="btn-add-carrera" class="btn btn-dark" type="button">Añadir carrera</button>
             </div>
@@ -244,10 +254,13 @@
 
           <section id="matricula-config" class="panel">
             <div class="panel-header">
-              <h3>Matrícula</h3>
-              <p>Configura cupos por grupo para balancear la asignación de clases.</p>
+              <h3>Matrícula por periodo y carrera</h3>
+              <p>Define la matrícula esperada por periodo, carrera y grupo académico.</p>
             </div>
             <div class="panel-body form-grid row-4">
+              <label>Periodo
+                <input type="text" placeholder="Ej: 2026-I" />
+              </label>
               <label>Carrera
                 <input type="text" placeholder="Nombre de carrera" />
               </label>
