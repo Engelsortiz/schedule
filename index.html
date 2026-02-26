@@ -28,7 +28,7 @@
           <details id="panel-csv" class="panel" open>
             <summary>1) Cargar clases por CSV y listado de clases</summary>
             <div class="panel-body">
-              <p class="hint">Columnas esperadas del CSV: <strong>clase,creditos,docente,aula</strong>.</p>
+              <p class="hint">Columnas esperadas del CSV: <strong>clase,creditos,docente,aula[,anio]</strong>.</p>
               <div class="grid-3">
                 <label>Coordinación<select id="csv-coordinacion"></select></label>
                 <label>Carrera<select id="csv-carrera"></select></label>
@@ -45,6 +45,7 @@
                     <tr>
                       <th>Coordinación</th>
                       <th>Carrera</th>
+                      <th>Año</th>
                       <th>Clase</th>
                       <th>Características</th>
                       <th>Docente preferido</th>
@@ -60,8 +61,9 @@
           <details id="panel-manual" class="panel" open>
             <summary>2) Asignación y cambios manuales</summary>
             <div class="panel-body">
-              <div class="grid-2">
+              <div class="grid-3">
                 <label>Coordinación<select id="manual-coordinacion"></select></label>
+                <label>Carrera<select id="manual-carrera"></select></label>
                 <label>Turno<select id="manual-turno"></select></label>
               </div>
               <div class="inline-actions">
@@ -69,6 +71,7 @@
                 <button id="btn-cambiar-asignacion" class="btn-outline">Cambiar clase existente</button>
               </div>
               <div class="grid-3">
+                <label>Año<select id="manual-year"></select></label>
                 <label>Clase<select id="manual-course"></select></label>
                 <label>Día<select id="manual-day"></select></label>
                 <label>Bloque<select id="manual-slot"></select></label>
@@ -83,24 +86,14 @@
           <details id="panel-auto" class="panel" open>
             <summary>3) Generación automática por carrera</summary>
             <div class="panel-body">
-              <p class="hint">No se permiten choques de docente o aula en el mismo bloque, ni duplicar una clase en múltiples bloques.</p>
-              <div class="grid-3">
-                <label>Coordinación<select id="auto-coordinacion"></select></label>
-                <label>Carrera<select id="auto-carrera"></select></label>
-                <label>Turno<select id="auto-turno"></select></label>
-              </div>
-              <div class="grid-3">
+              <p class="hint">Se utiliza la coordinación, carrera y turno seleccionados en la parte superior. Solo selecciona período.</p>
+              <div class="grid-2">
                 <label>Periodo<select id="auto-periodo"></select></label>
                 <label>Año<input id="auto-anio" type="number" min="2020" max="2100" value="2026" /></label>
-                <label>Inicio jornada<input id="cfg-inicio" type="time" value="08:00" /></label>
-              </div>
-              <div class="grid-2">
-                <label>Fin jornada<input id="cfg-fin" type="time" value="14:30" /></label>
-                <label>Minutos por bloque<input id="cfg-bloque" type="number" min="30" max="120" value="45" /></label>
               </div>
               <div class="inline-actions">
                 <button id="btn-generar-auto" class="btn-main">Generar automáticamente</button>
-                <button id="btn-reiniciar" class="btn-outline">Reiniciar demo</button>
+                <button id="btn-reiniciar" class="btn-outline">Reiniciar horarios</button>
               </div>
               <div id="log-console" class="console"></div>
             </div>
@@ -114,9 +107,7 @@
                 <label>Carrera<select id="view-carrera"></select></label>
                 <label>Turno<select id="view-turno"></select></label>
               </div>
-              <div class="table-wrap">
-                <table id="schedule-table"></table>
-              </div>
+              <div id="schedule-container"></div>
             </div>
           </details>
         </section>
@@ -129,9 +120,32 @@
                 <label>Turno<select id="cfg-turno"></select></label>
                 <label>Duración por bloque<input id="cfg-turno-bloque" type="number" value="45" min="30" max="120" /></label>
                 <label>Máx. turnos por día<input id="cfg-turno-max" type="number" value="8" min="1" max="16" /></label>
+                <label>Hora inicio clases<input id="cfg-turno-inicio" type="time" value="08:00" /></label>
+                <label>Hora fin clases<input id="cfg-turno-fin" type="time" value="14:30" /></label>
+                <label>Días habilitados (coma)<input id="cfg-turno-dias" type="text" value="Lunes,Martes,Miércoles,Jueves,Viernes" /></label>
+                <label>Prioridad días<input id="cfg-turno-prioridad" type="text" value="Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5" /></label>
+                <label>Inicio receso<input id="cfg-receso-inicio" type="time" value="10:00" /></label>
+                <label>Fin receso<input id="cfg-receso-fin" type="time" value="10:15" /></label>
+                <label>Inicio almuerzo<input id="cfg-almuerzo-inicio" type="time" value="12:00" /></label>
+                <label>Fin almuerzo<input id="cfg-almuerzo-fin" type="time" value="13:00" /></label>
               </div>
               <button id="btn-guardar-turno" class="btn-main">Guardar turno</button>
               <p id="cfg-turno-status" class="hint">Sin cambios.</p>
+            </div>
+          </details>
+
+          <details class="panel" open>
+            <summary>Configuración de periodos por turno</summary>
+            <div class="panel-body">
+              <div class="grid-3">
+                <label>Turno<select id="period-turno"></select></label>
+                <label>Nuevo periodo<input id="period-name" type="text" placeholder="Ej: Cuatrimestre I" /></label>
+                <button id="btn-add-period" class="btn-main">Agregar periodo</button>
+              </div>
+              <table>
+                <thead><tr><th>Periodo</th><th>Acción</th></tr></thead>
+                <tbody id="period-body"></tbody>
+              </table>
             </div>
           </details>
 

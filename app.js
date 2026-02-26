@@ -1,11 +1,37 @@
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+const YEARS = [1, 2, 3, 4, 5];
+const DEFAULT_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
 const state = {
   turnos: {
-    Diurno: { bloqueMin: 45, maxBloquesDia: 8, inicio: '08:00', fin: '14:30' },
-    Nocturno: { bloqueMin: 45, maxBloquesDia: 6, inicio: '18:00', fin: '22:30' }
+    Diurno: {
+      bloqueMin: 45,
+      maxBloquesDia: 8,
+      inicio: '08:00',
+      fin: '14:30',
+      diasHabilitados: [...DEFAULT_DAYS],
+      prioridadDias: 'Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5',
+      recesoInicio: '10:00',
+      recesoFin: '10:15',
+      almuerzoInicio: '12:00',
+      almuerzoFin: '13:00'
+    },
+    Nocturno: {
+      bloqueMin: 45,
+      maxBloquesDia: 6,
+      inicio: '18:00',
+      fin: '22:30',
+      diasHabilitados: [...DEFAULT_DAYS],
+      prioridadDias: 'Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5',
+      recesoInicio: '20:00',
+      recesoFin: '20:15',
+      almuerzoInicio: '00:00',
+      almuerzoFin: '00:00'
+    }
   },
-  periodos: ['Cuatrimestre I', 'Cuatrimestre II'],
+  periodosByTurno: {
+    Diurno: ['Cuatrimestre I', 'Cuatrimestre II'],
+    Nocturno: ['Cuatrimestre I', 'Cuatrimestre II']
+  },
   careersByCoord: {
     Arquitectura: ['Arquitectura', 'Diseño Gráfico'],
     Ingeniería: ['Ingeniería Industrial']
@@ -14,28 +40,22 @@ const state = {
     { nombre: 'Ing. José Pérez', area: 'Tecnología' },
     { nombre: 'MSc. María López', area: 'Ciencias Básicas' }
   ],
-  courses: [
-    {
-      clase: 'Taller de Diseño',
-      creditos: 4,
-      docente: 'Ing. José Pérez',
-      aula: 'Aula 1',
-      coordinacion: 'Arquitectura',
-      carrera: 'Arquitectura',
-      turno: 'Diurno'
-    },
-    {
-      clase: 'Identidad Nacional',
-      creditos: 2,
-      docente: 'MSc. María López',
-      aula: 'Aula 2',
-      coordinacion: 'Arquitectura',
-      carrera: 'Diseño Gráfico',
-      turno: 'Diurno'
-    }
-  ],
+  courses: [],
   assignments: []
 };
+
+state.courses = [
+  {
+    clase: 'Taller de Diseño',
+    creditos: 4,
+    docente: 'Ing. José Pérez',
+    aula: 'Aula 1',
+    coordinacion: 'Arquitectura',
+    carrera: 'Arquitectura',
+    turno: 'Diurno',
+    year: 1
+  }
+];
 
 const byId = (id) => document.getElementById(id);
 const el = {
@@ -46,21 +66,17 @@ const el = {
   csvStatus: byId('csv-status'),
   csvInput: byId('csv-input'),
   manualStatus: byId('manual-status'),
-  scheduleTable: byId('schedule-table'),
+  scheduleContainer: byId('schedule-container'),
   logConsole: byId('log-console'),
   teacherBody: byId('teacher-body'),
   coordBody: byId('coord-body'),
-  cfgTurnoStatus: byId('cfg-turno-status')
+  cfgTurnoStatus: byId('cfg-turno-status'),
+  periodBody: byId('period-body')
 };
 
-const selectIds = [
-  'csv-coordinacion',
-  'manual-coordinacion',
-  'auto-coordinacion',
-  'view-coordinacion'
-];
-const careerSelectIds = ['csv-carrera', 'auto-carrera', 'view-carrera'];
-const turnSelectIds = ['csv-turno', 'manual-turno', 'auto-turno', 'view-turno', 'cfg-turno'];
+const selectIds = ['csv-coordinacion', 'manual-coordinacion', 'view-coordinacion'];
+const careerSelectIds = ['csv-carrera', 'manual-carrera', 'view-carrera'];
+const turnSelectIds = ['csv-turno', 'manual-turno', 'view-turno', 'cfg-turno', 'period-turno'];
 
 const pad = (n) => String(n).padStart(2, '0');
 const timeToMin = (time) => {
@@ -81,6 +97,22 @@ const currentFilters = (scope = 'csv') => ({
 
 const slotLabel = (idx, from, to) => `D${idx}\n${from}-${to}`;
 
+const parsePrioridadDias = (prioridad) => {
+  const map = {};
+  prioridad.split(',').forEach((item) => {
+    const [d, p] = item.split(':').map((v) => v.trim());
+    if (d) map[d] = Number(p) || 999;
+  });
+  return map;
+};
+
+const getDaysByTurno = (turno) => {
+  const cfg = state.turnos[turno] || state.turnos.Diurno;
+  const days = (cfg.diasHabilitados || DEFAULT_DAYS).map((d) => d.trim()).filter(Boolean);
+  const priority = parsePrioridadDias(cfg.prioridadDias || 'Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5');
+  return [...new Set(days)].sort((a, b) => (priority[a] || 999) - (priority[b] || 999));
+};
+
 const getSlotsByTurno = (turno) => {
   const cfg = state.turnos[turno] || state.turnos.Diurno;
   const start = timeToMin(cfg.inicio);
@@ -88,8 +120,13 @@ const getSlotsByTurno = (turno) => {
   const slots = [];
   let idx = 1;
   for (let min = start; min + cfg.bloqueMin <= end && idx <= cfg.maxBloquesDia; min += cfg.bloqueMin) {
-    slots.push(slotLabel(idx, minToTime(min), minToTime(min + cfg.bloqueMin)));
-    idx += 1;
+    const next = min + cfg.bloqueMin;
+    const inBreak = timeToMin(cfg.recesoInicio) < next && timeToMin(cfg.recesoFin) > min;
+    const inLunch = timeToMin(cfg.almuerzoInicio) < next && timeToMin(cfg.almuerzoFin) > min;
+    if (!inBreak && !inLunch) {
+      slots.push(slotLabel(idx, minToTime(min), minToTime(next)));
+      idx += 1;
+    }
   }
   return slots;
 };
@@ -118,18 +155,11 @@ const parseCSVLine = (line) => {
 const sameContext = (item, ctx) =>
   item.coordinacion === ctx.coordinacion && item.carrera === ctx.carrera && item.turno === ctx.turno;
 
-const classAlreadyScheduled = (courseName, ctx) =>
-  state.assignments.some((a) => a.course === courseName && sameContext(a, ctx));
+const classAlreadyScheduled = (courseName, ctx, year) =>
+  state.assignments.some((a) => a.course === courseName && sameContext(a, ctx) && a.year === year);
 
-const findConflict = (candidate, ignoreCourse = null) =>
-  state.assignments.find(
-    (a) =>
-      a.day === candidate.day &&
-      a.block === candidate.block &&
-      sameContext(a, candidate) &&
-      a.course !== ignoreCourse &&
-      (a.teacher === candidate.teacher || a.room === candidate.room)
-  );
+const findConflict = (candidate) =>
+  state.assignments.find((a) => a.day === candidate.day && a.block === candidate.block && sameContext(a, candidate) && a.year === candidate.year);
 
 const renderCoordinacionOptions = () => {
   const options = listCoordinaciones().map((c) => `<option value="${c}">${c}</option>`).join('');
@@ -156,62 +186,74 @@ const syncCareerSelects = () => {
   });
 };
 
+const syncTopSelectors = () => {
+  byId('manual-coordinacion').value = byId('csv-coordinacion').value;
+  byId('manual-carrera').value = byId('csv-carrera').value;
+  byId('manual-turno').value = byId('csv-turno').value;
+};
+
 const getCoursesByContext = (ctx) => state.courses.filter((c) => sameContext(c, ctx));
 
 const renderCourses = () => {
   const ctx = currentFilters('csv');
   const rows = getCoursesByContext(ctx)
     .map(
-      (c) => `<tr><td>${c.coordinacion}</td><td>${c.carrera}</td><td>${c.clase}</td><td><span class="badge">${c.creditos} créditos</span></td><td>${c.docente}</td><td>${c.aula}</td></tr>`
+      (c) => `<tr><td>${c.coordinacion}</td><td>${c.carrera}</td><td>${c.year || 1}</td><td>${c.clase}</td><td><span class="badge">${c.creditos} créditos</span></td><td>${c.docente}</td><td>${c.aula}</td></tr>`
     )
     .join('');
-  el.coursesBody.innerHTML = rows || '<tr><td colspan="6">Sin información todavía.</td></tr>';
+  el.coursesBody.innerHTML = rows || '<tr><td colspan="7">Sin información todavía.</td></tr>';
 };
 
 const renderTeacherTable = () => {
-  el.teacherBody.innerHTML = state.teachers
-    .map((t) => `<tr><td>${t.nombre}</td><td>${t.area}</td></tr>`)
-    .join('');
+  el.teacherBody.innerHTML = state.teachers.map((t) => `<tr><td>${t.nombre}</td><td>${t.area}</td></tr>`).join('');
 };
 
 const renderCoordTable = () => {
   byId('coord-target').innerHTML = listCoordinaciones().map((c) => `<option value="${c}">${c}</option>`).join('');
-  el.coordBody.innerHTML = listCoordinaciones()
-    .map((c) => `<tr><td>${c}</td><td>${listCarreras(c).join(', ')}</td></tr>`)
-    .join('');
+  el.coordBody.innerHTML = listCoordinaciones().map((c) => `<tr><td>${c}</td><td>${listCarreras(c).join(', ')}</td></tr>`).join('');
 };
 
 const renderManualSelectors = () => {
-  const ctx = {
-    coordinacion: byId('manual-coordinacion').value,
-    carrera: listCarreras(byId('manual-coordinacion').value)[0] || '',
-    turno: byId('manual-turno').value
-  };
+  const ctx = currentFilters('manual');
   const courses = getCoursesByContext(ctx);
   const rooms = [...new Set(courses.map((c) => c.aula))];
   const teachers = [...new Set(courses.map((c) => c.docente).concat(state.teachers.map((t) => t.nombre)))];
-  byId('manual-course').innerHTML = courses.map((c) => `<option value="${c.clase}">${c.clase}</option>`).join('');
-  byId('manual-day').innerHTML = DAYS.map((d) => `<option value="${d}">${d}</option>`).join('');
+  byId('manual-year').innerHTML = YEARS.map((y) => `<option value="${y}">${y}</option>`).join('');
+  byId('manual-course').innerHTML = courses.map((c) => `<option value="${c.clase}">${c.clase} (Año ${c.year || 1})</option>`).join('');
+  byId('manual-day').innerHTML = getDaysByTurno(ctx.turno).map((d) => `<option value="${d}">${d}</option>`).join('');
   byId('manual-slot').innerHTML = getSlotsByTurno(ctx.turno).map((s) => `<option value="${s}">${s.replace('\n', ' ')}</option>`).join('');
   byId('manual-room').innerHTML = rooms.map((r) => `<option value="${r}">${r}</option>`).join('');
   byId('manual-teacher').innerHTML = teachers.map((t) => `<option value="${t}">${t}</option>`).join('');
 };
 
 const renderPeriodos = () => {
-  byId('auto-periodo').innerHTML = state.periodos.map((p) => `<option value="${p}">${p}</option>`).join('');
+  const turno = byId('csv-turno').value;
+  byId('auto-periodo').innerHTML = (state.periodosByTurno[turno] || []).map((p) => `<option value="${p}">${p}</option>`).join('');
+  const turnoPeriod = byId('period-turno').value || turno;
+  el.periodBody.innerHTML = (state.periodosByTurno[turnoPeriod] || [])
+    .map((p) => `<tr><td>${p}</td><td><button class="btn-outline btn-delete-period" data-period="${p}">Eliminar</button></td></tr>`)
+    .join('');
 };
 
 const renderSchedule = () => {
   const ctx = currentFilters('view');
   const slots = getSlotsByTurno(ctx.turno);
-  el.scheduleTable.innerHTML = `<thead><tr><th>Bloque</th>${DAYS.map((d) => `<th>${d}</th>`).join('')}</tr></thead><tbody>${slots
-    .map(
-      (slot) => `<tr><td>${slot.replace('\n', '<br>')}</td>${DAYS.map((day) => {
-        const a = state.assignments.find((item) => item.day === day && item.block === slot && sameContext(item, ctx));
-        return `<td>${a ? `${a.course}<br><small>${a.teacher}</small><br><small>${a.room}</small>` : '-'}</td>`;
-      }).join('')}</tr>`
-    )
-    .join('')}</tbody>`;
+  const days = getDaysByTurno(ctx.turno);
+  el.scheduleContainer.innerHTML = YEARS.map((year) => {
+    const rows = slots
+      .map(
+        (slot) => `<tr><td>${slot.replace('\n', '<br>')}</td>${days
+          .map((day) => {
+            const a = state.assignments.find((item) => item.day === day && item.block === slot && sameContext(item, ctx) && item.year === year);
+            return `<td>${a ? `${a.course}<br><small>${a.teacher}</small><br><small>${a.room}</small>` : '-'}</td>`;
+          })
+          .join('')}</tr>`
+      )
+      .join('');
+    return `<h4>Horario ${year}° año</h4><div class="table-wrap"><table><thead><tr><th>Bloque</th>${days
+      .map((d) => `<th>${d}</th>`)
+      .join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }).join('');
 };
 
 const importCSV = async () => {
@@ -222,22 +264,18 @@ const importCSV = async () => {
     return;
   }
   const ctx = currentFilters('csv');
-  const lines = (await file.text())
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map(parseCSVLine)
-    .filter((row) => row.length >= 4);
+  const lines = (await file.text()).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map(parseCSVLine).filter((row) => row.length >= 4);
 
   const rows = /clase/i.test(lines[0]?.[0]) ? lines.slice(1) : lines;
-  const loaded = rows.map(([clase, creditos, docente, aula]) => ({
+  const loaded = rows.map(([clase, creditos, docente, aula, anio]) => ({
     clase,
     creditos: Number(creditos) || 1,
     docente,
     aula,
     coordinacion: ctx.coordinacion,
     carrera: ctx.carrera,
-    turno: ctx.turno
+    turno: ctx.turno,
+    year: Math.max(1, Math.min(5, Number(anio) || 1))
   }));
 
   state.courses = state.courses.filter((c) => !sameContext(c, ctx)).concat(loaded);
@@ -249,16 +287,21 @@ const importCSV = async () => {
 };
 
 const saveManual = (replaceMode = false) => {
+  const ctx = currentFilters('manual');
+  if (!ctx.carrera) {
+    el.manualStatus.textContent = 'Selecciona carrera antes de agregar una clase manual.';
+    el.manualStatus.className = 'hint status-error';
+    return;
+  }
+
   const courseName = byId('manual-course').value;
+  const year = Number(byId('manual-year').value) || 1;
   if (!courseName) {
     el.manualStatus.textContent = 'No hay clases disponibles para asignar.';
     el.manualStatus.className = 'hint status-error';
     return;
   }
 
-  const coord = byId('manual-coordinacion').value;
-  const turno = byId('manual-turno').value;
-  const career = listCarreras(coord)[0] || '';
   const candidate = {
     course: courseName,
     day: byId('manual-day').value,
@@ -266,26 +309,30 @@ const saveManual = (replaceMode = false) => {
     room: byId('manual-room').value,
     teacher: byId('manual-teacher').value,
     note: byId('manual-note').value.trim(),
-    coordinacion: coord,
-    carrera: career,
-    turno
+    coordinacion: ctx.coordinacion,
+    carrera: ctx.carrera,
+    turno: ctx.turno,
+    year,
+    source: 'manual'
   };
 
-  if (!replaceMode && classAlreadyScheduled(candidate.course, candidate)) {
-    el.manualStatus.textContent = 'Esta clase ya fue asignada en ese contexto.';
+  if (!replaceMode && classAlreadyScheduled(candidate.course, candidate, candidate.year)) {
+    el.manualStatus.textContent = 'Esta clase ya fue asignada en ese contexto/año.';
     el.manualStatus.className = 'hint status-error';
     return;
   }
 
-  const conflict = findConflict(candidate, replaceMode ? candidate.course : null);
-  if (conflict) {
-    el.manualStatus.textContent = `Conflicto: ${conflict.teacher === candidate.teacher ? 'docente' : 'aula'} ocupado(a) en ${candidate.day}.`;
-    el.manualStatus.className = 'hint status-error';
-    return;
+  const existingInCell = findConflict(candidate);
+  if (existingInCell) {
+    const ok = window.confirm(
+      `Ya existe ${existingInCell.course} en ${candidate.day} ${candidate.block} para año ${candidate.year} de ${candidate.carrera}. Se perderá la clase actual. ¿Deseas reemplazar?`
+    );
+    if (!ok) return;
+    state.assignments = state.assignments.filter((a) => a !== existingInCell);
   }
 
   if (replaceMode) {
-    state.assignments = state.assignments.filter((a) => !(a.course === candidate.course && sameContext(a, candidate)));
+    state.assignments = state.assignments.filter((a) => !(a.course === candidate.course && sameContext(a, candidate) && a.year === candidate.year));
   }
 
   state.assignments.push(candidate);
@@ -296,46 +343,50 @@ const saveManual = (replaceMode = false) => {
 };
 
 const autoGenerate = () => {
-  const ctx = currentFilters('auto');
+  const ctx = currentFilters('csv');
   const slots = getSlotsByTurno(ctx.turno);
-  const cells = DAYS.flatMap((day) => slots.map((block) => ({ day, block })));
+  const days = getDaysByTurno(ctx.turno);
+  const cells = days.flatMap((day) => slots.map((block) => ({ day, block })));
   const courses = getCoursesByContext(ctx);
 
-  state.assignments = state.assignments.filter((a) => !sameContext(a, ctx));
+  state.assignments = state.assignments.filter((a) => !(sameContext(a, ctx) && a.source === 'auto'));
 
-  let cursor = 0;
   let assignedCount = 0;
 
-  for (const course of courses) {
-    const needed = Math.max(1, Number(course.creditos) || 1);
-    let placed = 0;
+  for (const year of YEARS) {
+    const yearCourses = courses.filter((c) => (c.year || 1) === year);
+    let cursor = 0;
+    for (const course of yearCourses) {
+      const needed = Math.max(1, Number(course.creditos) || 1);
+      const existing = state.assignments.filter((a) => sameContext(a, ctx) && a.year === year && a.course === course.clase).length;
+      let placed = existing;
 
-    while (placed < needed && cursor < cells.length) {
-      const cell = cells[cursor++];
-      const candidate = {
-        course: course.clase,
-        day: cell.day,
-        block: cell.block,
-        room: course.aula,
-        teacher: course.docente,
-        note: '',
-        coordinacion: course.coordinacion,
-        carrera: course.carrera,
-        turno: course.turno
-      };
+      while (placed < needed && cursor < cells.length) {
+        const cell = cells[cursor++];
+        const candidate = {
+          course: course.clase,
+          day: cell.day,
+          block: cell.block,
+          room: course.aula,
+          teacher: course.docente,
+          note: '',
+          coordinacion: course.coordinacion,
+          carrera: course.carrera,
+          turno: course.turno,
+          year,
+          source: 'auto'
+        };
 
-      const alreadyInCell = state.assignments.some((a) => a.day === cell.day && a.block === cell.block && sameContext(a, ctx));
-      const conflict = findConflict(candidate);
-      if (alreadyInCell || conflict || classAlreadyScheduled(candidate.course, candidate)) {
-        continue;
+        const alreadyInCell = state.assignments.some((a) => a.day === cell.day && a.block === cell.block && sameContext(a, ctx) && a.year === year);
+        if (alreadyInCell || classAlreadyScheduled(candidate.course, candidate, year)) continue;
+        state.assignments.push(candidate);
+        placed += 1;
+        assignedCount += 1;
       }
-      state.assignments.push(candidate);
-      placed += 1;
-      assignedCount += 1;
     }
   }
 
-  const info = `Generación completada: ${assignedCount} bloques asignados (${courses.length} clases).`;
+  const info = `Generación completada: ${assignedCount} bloques asignados usando clases CSV + manuales existentes.`;
   el.manualStatus.textContent = info;
   el.manualStatus.className = 'hint status-ok';
   log(info);
@@ -344,28 +395,72 @@ const autoGenerate = () => {
 
 const resetDemo = () => {
   state.assignments = [];
-  el.manualStatus.textContent = 'Horario reiniciado.';
+  el.manualStatus.textContent = 'Solo se reinició el horario. Configuración conservada.';
   el.manualStatus.className = 'hint';
   renderSchedule();
-  log('Demo reiniciada.');
+  log('Horarios reiniciados (configuración preservada).');
 };
 
 const saveTurnoConfig = () => {
   const turno = byId('cfg-turno').value;
   const bloqueMin = Number(byId('cfg-turno-bloque').value) || 45;
   const maxBloquesDia = Number(byId('cfg-turno-max').value) || 8;
-  const inicio = byId('cfg-inicio').value;
-  const fin = byId('cfg-fin').value;
+  const inicio = byId('cfg-turno-inicio').value || '08:00';
+  const fin = byId('cfg-turno-fin').value || '14:30';
+  const diasHabilitados = byId('cfg-turno-dias').value.split(',').map((d) => d.trim()).filter(Boolean);
+  const prioridadDias = byId('cfg-turno-prioridad').value.trim() || 'Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5';
   if (timeToMin(fin) <= timeToMin(inicio)) {
     el.cfgTurnoStatus.textContent = 'Rango de horas inválido.';
     el.cfgTurnoStatus.className = 'hint status-error';
     return;
   }
-  state.turnos[turno] = { bloqueMin, maxBloquesDia, inicio, fin };
+  state.turnos[turno] = {
+    ...state.turnos[turno],
+    bloqueMin,
+    maxBloquesDia,
+    inicio,
+    fin,
+    diasHabilitados: diasHabilitados.length ? diasHabilitados : [...DEFAULT_DAYS],
+    prioridadDias,
+    recesoInicio: byId('cfg-receso-inicio').value,
+    recesoFin: byId('cfg-receso-fin').value,
+    almuerzoInicio: byId('cfg-almuerzo-inicio').value,
+    almuerzoFin: byId('cfg-almuerzo-fin').value
+  };
   el.cfgTurnoStatus.textContent = `Turno ${turno} actualizado.`;
   el.cfgTurnoStatus.className = 'hint status-ok';
   renderManualSelectors();
   renderSchedule();
+};
+
+const loadTurnoConfig = (turno) => {
+  const cfg = state.turnos[turno];
+  byId('cfg-turno-bloque').value = cfg.bloqueMin;
+  byId('cfg-turno-max').value = cfg.maxBloquesDia;
+  byId('cfg-turno-inicio').value = cfg.inicio;
+  byId('cfg-turno-fin').value = cfg.fin;
+  byId('cfg-turno-dias').value = (cfg.diasHabilitados || DEFAULT_DAYS).join(',');
+  byId('cfg-turno-prioridad').value = cfg.prioridadDias || 'Lunes:1,Martes:2,Miércoles:3,Jueves:4,Viernes:5';
+  byId('cfg-receso-inicio').value = cfg.recesoInicio;
+  byId('cfg-receso-fin').value = cfg.recesoFin;
+  byId('cfg-almuerzo-inicio').value = cfg.almuerzoInicio;
+  byId('cfg-almuerzo-fin').value = cfg.almuerzoFin;
+};
+
+const addPeriod = () => {
+  const turno = byId('period-turno').value;
+  const period = byId('period-name').value.trim();
+  if (!period) return;
+  state.periodosByTurno[turno] = state.periodosByTurno[turno] || [];
+  if (!state.periodosByTurno[turno].includes(period)) state.periodosByTurno[turno].push(period);
+  byId('period-name').value = '';
+  renderPeriodos();
+};
+
+const removePeriod = (period) => {
+  const turno = byId('period-turno').value;
+  state.periodosByTurno[turno] = (state.periodosByTurno[turno] || []).filter((p) => p !== period);
+  renderPeriodos();
 };
 
 const addTeacher = () => {
@@ -403,9 +498,11 @@ const renderAllSelectors = () => {
   renderCoordinacionOptions();
   renderTurnoOptions();
   syncCareerSelects();
+  syncTopSelectors();
   renderCoordTable();
   renderCourses();
   renderManualSelectors();
+  renderPeriodos();
   renderSchedule();
 };
 
@@ -416,18 +513,26 @@ byId('btn-cambiar-asignacion').addEventListener('click', () => saveManual(true))
 byId('btn-generar-auto').addEventListener('click', autoGenerate);
 byId('btn-reiniciar').addEventListener('click', resetDemo);
 byId('btn-guardar-turno').addEventListener('click', saveTurnoConfig);
+byId('btn-add-period').addEventListener('click', addPeriod);
 byId('btn-add-teacher').addEventListener('click', addTeacher);
 byId('btn-add-coord').addEventListener('click', addCoord);
 byId('btn-link-career').addEventListener('click', linkCareer);
 
+el.periodBody.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.btn-delete-period');
+  if (btn) removePeriod(btn.dataset.period);
+});
+
 selectIds.forEach((id) => byId(id).addEventListener('change', () => {
   syncCareerSelects();
+  if (id === 'csv-coordinacion') syncTopSelectors();
   renderCourses();
   renderManualSelectors();
   renderSchedule();
 }));
 
 careerSelectIds.forEach((id) => byId(id).addEventListener('change', () => {
+  if (id === 'csv-carrera') syncTopSelectors();
   renderCourses();
   renderSchedule();
 }));
@@ -436,24 +541,9 @@ turnSelectIds.forEach((id) => {
   const node = byId(id);
   if (!node) return;
   node.addEventListener('change', () => {
-    if (id === 'cfg-turno') {
-      const cfg = state.turnos[node.value];
-      byId('cfg-turno-bloque').value = cfg.bloqueMin;
-      byId('cfg-turno-max').value = cfg.maxBloquesDia;
-      byId('cfg-inicio').value = cfg.inicio;
-      byId('cfg-fin').value = cfg.fin;
-    }
-    renderManualSelectors();
-    renderSchedule();
-  });
-});
-
-['cfg-inicio', 'cfg-fin', 'cfg-bloque'].forEach((id) => {
-  byId(id).addEventListener('change', () => {
-    const turno = byId('auto-turno').value;
-    state.turnos[turno].inicio = byId('cfg-inicio').value;
-    state.turnos[turno].fin = byId('cfg-fin').value;
-    state.turnos[turno].bloqueMin = Number(byId('cfg-bloque').value) || state.turnos[turno].bloqueMin;
+    if (id === 'cfg-turno') loadTurnoConfig(node.value);
+    if (id === 'period-turno' || id === 'csv-turno') renderPeriodos();
+    if (id === 'csv-turno') syncTopSelectors();
     renderManualSelectors();
     renderSchedule();
   });
@@ -470,6 +560,6 @@ document.querySelectorAll('#footer-tabs .tab').forEach((btn) => {
 });
 
 renderAllSelectors();
+loadTurnoConfig(byId('cfg-turno').value);
 renderTeacherTable();
-renderPeriodos();
 log('Interfaz iniciada.');
